@@ -102,7 +102,7 @@ cd Twilight-Princess-Ultimate-Edition</pre>
 <pre>cd /path to repo/</pre>
 
 <p>Configure the project:</p>
-<pre>python3 configure.py --version=GZ2E01</pre>
+<pre>python3 configure.py --non-matching --map</pre>
 
 <p>Build:</p>
 <pre>ninja</pre>
