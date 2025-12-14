@@ -651,7 +651,8 @@ int daSpinner_c::execute() {
 
     daAlink_c* player = daAlink_getAlinkActorClass();
     if (!player->checkGameOverWindow() && field_0xa78 != 0) {
-        field_0xa78 -= SCALE_TIME;
+        // Timer was initialized using frames / DELTA_TIME; decrement by 1 tick per update.
+        field_0xa78--;
     }
 
     f32 pad_stick_value;
