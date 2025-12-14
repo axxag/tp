@@ -13,11 +13,14 @@ scaling:
 2. DELTA_TIME - For movement and smooth changes
 
 Implementation notes (current codebase):
-  - `DELTA_TIME` is a 30fps-normalized timestep: 30fps => 1.0, 60fps => 0.5
-  - `SCALE_TIME` is an integer multiplier: 30fps => 1, 60fps => 2
-  - For target framerates > 60, the engine caps *logic* at 60fps pace by forcing
-    `DELTA_TIME = 0.5f` and skipping some logic updates via `g_shouldUpdateLogic`.
-    Rendering may be >60, but “ticks” still represent 60fps time.
+  - `DELTA_TIME` is a real, measured 30fps-normalized timestep:
+      - 30fps frame time => 1.0
+      - 60fps frame time => 0.5
+      - If the game misses frames (e.g. runs at ~30 while in 60 mode), `DELTA_TIME`
+        rises toward 1.0 so movement stays real-time consistent (no slow-motion).
+  - `SCALE_TIME` is still the legacy integer multiplier (selected mode):
+      - 30fps mode => 1
+      - 60fps mode => 2
 
 
 ================================================================================
