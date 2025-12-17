@@ -9,6 +9,7 @@
 #include "dolphin/gx.h"
 #include <dolphin/vi.h>
 #include "global.h"
+#include "stdint.h"
 
 void JFWDisplay::ctor_subroutine(bool enableAlpha) {
     mEnableAlpha = enableAlpha;
@@ -407,6 +408,17 @@ static void waitForTick(u32 p1, u16 p2) {
         do {
             nextFrameTime += ticksPerFrame;
         } while (nextFrameTime <= currentTime);
+
+        // Original:
+        // static u32 nextCount = VIGetRetraceCount();
+        // u32 uVar1 = (p2 == 0) ? 1 : p2;
+        // OSMessage msg;
+        // do {
+        //     if (!OSReceiveMessage(JUTVideo::getManager()->getMessageQueue(), &msg, OS_MESSAGE_BLOCK)) {
+        //         msg = 0;
+        //     }
+        // } while (((intptr_t)msg - (intptr_t)nextCount) < 0);
+        // nextCount = (intptr_t)msg + uVar1;
     }
 }
 

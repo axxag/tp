@@ -55,12 +55,16 @@ public:
     #if PLATFORM_WII || PLATFORM_SHIELD
     class csr_c {
     public:
-        virtual ~csr_c();
+        virtual ~csr_c() {}
         virtual bool isPointer();
 
-        void particleExecute();
+        static void particleExecute();
+        static u32 getBlurID() { return m_blurID; }
 
         static u32 m_blurID;
+        static cXyz m_oldEffPos;
+        static cXyz m_oldOldEffPos;
+        static cXyz m_nowEffPos;
     };
 
     static void entryBaseCsr(csr_c*);
@@ -112,7 +116,7 @@ public:
     }
 
     static f32 getWidthF() {
-        #if PLATFORM_WII || PLATFORM_SHIELD
+        #if WIDESCREEN_SUPPORT
         return m_widthF;
         #elif WIDESCREEN_SUPPORT
         return m_widthF;
@@ -122,7 +126,7 @@ public:
     }
 
     static f32 getHeightF() {
-        #if PLATFORM_WII || PLATFORM_SHIELD
+        #if WIDESCREEN_SUPPORT
         return m_heightF;
         #elif WIDESCREEN_SUPPORT
         return m_heightF;
@@ -135,7 +139,7 @@ public:
     static f32 getHeight() { return FB_HEIGHT; }
 
     static f32 getMinYF() {
-        #if PLATFORM_WII || PLATFORM_SHIELD
+        #if WIDESCREEN_SUPPORT
         return m_minYF;
         #elif WIDESCREEN_SUPPORT
         return m_minYF;
@@ -145,7 +149,7 @@ public:
     }
 
     static f32 getMinXF() {
-        #if PLATFORM_WII || PLATFORM_SHIELD
+        #if WIDESCREEN_SUPPORT
         return m_minXF;
         #elif WIDESCREEN_SUPPORT
         return m_minXF;
@@ -155,7 +159,7 @@ public:
     }
 
     static f32 getMaxYF() {
-        #if PLATFORM_WII || PLATFORM_SHIELD
+        #if WIDESCREEN_SUPPORT
         return m_maxYF;
         #elif WIDESCREEN_SUPPORT
         return m_maxYF;
@@ -165,7 +169,7 @@ public:
     }
 
     static f32 getMaxXF() {
-        #if PLATFORM_WII || PLATFORM_SHIELD
+        #if WIDESCREEN_SUPPORT
         return m_maxXF;
         #elif WIDESCREEN_SUPPORT
         return m_maxXF;
@@ -245,7 +249,13 @@ public:
         #endif
     }
 
-    static f32 getScale() { return 1.0f; }
+    static f32 getScale() {
+        #if WIDESCREEN_SUPPORT
+        return m_scale;
+        #else
+        return 1.0f;
+        #endif
+    }
 
     #if WIDESCREEN_SUPPORT
     static void setTvSize();

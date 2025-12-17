@@ -271,14 +271,14 @@ int mDoMain::argument = -1;
 
 s8 mDoMain::developmentMode = true;
 
-#ifdef DEBUG
+#if DEBUG
 u32 mDoMain::gameHeapSize = 0xFFFFFFFF;
 u32 mDoMain::archiveHeapSize = 0xFFFFFFFF;
 #endif
 
 u32 mDoMain::memMargin = 0xFFFFFFFF;
 
-#ifdef DEBUG
+#if DEBUG
 int mDoMain::e3menu_no = -1;
 #endif
 

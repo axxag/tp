@@ -67,12 +67,20 @@ void TObject::setFlag_operation(u8 op, int val) {
     }
 }
 
+#if !PLATFORM_SHIELD || DEBUG
 void TObject::reset(const void* arg1) {
     bSequence_ = 0;
     mStatus = STATUS_STILL;
     pSequence_next = arg1;
     u32Wait_ = 0;
 }
+#endif
+
+#if DEBUG
+void TObject::reset() {
+    reset(NULL);
+}
+#endif
 
 bool TObject::forward(u32 arg1) {
     bool temp = false;
@@ -334,10 +342,10 @@ TObject* TControl::getObject(void const* param_0, u32 param_1) {
 
 void TControl::reset() {
     resetStatus_();
-    mObject_control.reset(NULL);
-    JGadget::TContainerEnumerator<JStudio::stb::TObject, -12> aTStack_18(&mObjectContainer);
+    mObject_control.reset();
+    JGadget::TContainerEnumerator<JGadget::TLinkList<JStudio::stb::TObject, -12> > aTStack_18(mObjectContainer);
     while (aTStack_18) {
-        (*aTStack_18).reset(NULL);
+        (*aTStack_18).reset();
     }
 }
 
@@ -346,7 +354,7 @@ bool TControl::forward(u32 param_0) {
     bool rv = mObject_control.forward(param_0);
     int uVar7 = 0xf;
     int uVar6 = 0;
-    JGadget::TContainerEnumerator<JStudio::stb::TObject, -12> aTStack_38(&mObjectContainer);
+    JGadget::TContainerEnumerator<JGadget::TLinkList<JStudio::stb::TObject, -12> > aTStack_38(mObjectContainer);
     while (aTStack_38) {
         JStudio::stb::TObject& this_00 = *aTStack_38;
         rv = this_00.forward(param_0) || rv;

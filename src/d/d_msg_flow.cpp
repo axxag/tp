@@ -68,7 +68,7 @@ void dMsgFlow_c::init(fopAc_ac_c* i_partner, int i_flowID, int param_2, fopAc_ac
 
             setNodeIndex(nodeIdx, i_talkPartners);
         }
-#ifdef DEBUG
+#if DEBUG
         dbgPrint();
 #endif
         dMsgObject_setSelectWordFlag(0);
@@ -457,7 +457,7 @@ int dMsgFlow_c::setSelectMsg(mesg_flow_node* i_flowNode_p, mesg_flow_node* param
     // "Message Set (Select)"
     OS_REPORT("\x1B[44;37mメッセ−ジセット（選択）　　　　　　\x1B[m|:");
 
-#ifdef DEBUG
+#if DEBUG
     if (i_speaker_p != NULL) {
         const char* speaker_name = fopAcM_getProcNameString(i_speaker_p);
         OS_REPORT("flow:%d, msg:%d(%d), speaker:%s\n", mFlow, msg_no, temp_r25, speaker_name);
@@ -501,7 +501,7 @@ int dMsgFlow_c::setNormalMsg(mesg_flow_node* i_flowNode_p, fopAc_ac_c* i_speaker
     // "Message Set"
     OS_REPORT("\x1B[44;37mメッセ−ジセット　　　　　　　　　　\x1B[m|:");
 
-#ifdef DEBUG
+#if DEBUG
     if (i_speaker_p != NULL) {
         const char* speaker_name = fopAcM_getProcNameString(i_speaker_p);
         OS_REPORT("flow:%d, msg:%d, speaker:%s\n", mFlow, msg_no, speaker_name);
@@ -761,13 +761,13 @@ queryFunc dMsgFlow_c::mQueryList[53] = {
     &dMsgFlow_c::query053,
 };
 
-#ifdef DEBUG
+#if DEBUG
 void dMsgFlow_c::dbgPrint() {}
 #endif
 
 u16 dMsgFlow_c::query001(mesg_flow_node_branch* i_flowNode_p, fopAc_ac_c* i_speaker_p, int param_2) {
     const u16 prm0 = i_flowNode_p->param;
-    u16 ret = dComIfGs_isEventBit((u16)dSv_event_flag_c::saveBitLabels[prm0]) == false;
+    u16 ret = dComIfGs_isEventBit(dSv_event_flag_c::saveBitLabels[prm0]) == false;
 
     if (param_2 != 0) {
         // "Flag Check"
@@ -1753,11 +1753,11 @@ int dMsgFlow_c::event000(mesg_flow_node_event* i_flowNode_p, fopAc_ac_c* i_speak
     OS_REPORT("flow:%d, prm0:%d, prm1:%d\n", mFlow, prm0, prm1);
 
     if (prm0 != 0) {
-        dComIfGs_onEventBit((u16)dSv_event_flag_c::saveBitLabels[prm0]);
+        dComIfGs_onEventBit(dSv_event_flag_c::saveBitLabels[prm0]);
     }
 
     if (prm1 != 0) {
-        dComIfGs_onEventBit((u16)dSv_event_flag_c::saveBitLabels[prm1]);
+        dComIfGs_onEventBit(dSv_event_flag_c::saveBitLabels[prm1]);
     }
 
     return 1;
@@ -1772,11 +1772,11 @@ int dMsgFlow_c::event001(mesg_flow_node_event* i_flowNode_p, fopAc_ac_c* i_speak
     OS_REPORT("flow:%d, prm0:%d, prm1:%d\n", mFlow, prm0, prm1);
 
     if (prm0 != 0) {
-        dComIfGs_offEventBit((u16)dSv_event_flag_c::saveBitLabels[prm0]);
+        dComIfGs_offEventBit(dSv_event_flag_c::saveBitLabels[prm0]);
     }
 
     if (prm1 != 0) {
-        dComIfGs_offEventBit((u16)dSv_event_flag_c::saveBitLabels[prm1]);
+        dComIfGs_offEventBit(dSv_event_flag_c::saveBitLabels[prm1]);
     }
 
     return 1;

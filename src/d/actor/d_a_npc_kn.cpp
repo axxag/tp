@@ -1023,11 +1023,11 @@ u32 daNpc_Kn_c::setParamTeach05() {
 }
 
 u32 daNpc_Kn_c::setParamTeach06() {
-    setParamTeach05();
+    return setParamTeach05();
 }
 
 u32 daNpc_Kn_c::setParamTeach07() {
-    setParamTeach05();
+    return setParamTeach05();
 }
 
 void daNpc_Kn_c::setAfterTalkMotion() {
@@ -4980,7 +4980,7 @@ int daNpc_Kn_c::setSlipPrtcl() {
     mDoMtx_stack_c::multVecZero(&mParticleMngr[0].mPos);
     mParticleMngr[0].mPos.y -= 20.0f;
     mParticleMngr[0].mAngle = current.angle;
-    #ifdef DEBUG
+    #if DEBUG
     mParticleMngr[0].mAngle.y -= (s16) 0x8000;
     #else
     mParticleMngr[0].mAngle.y -= 0x8000;
@@ -4991,7 +4991,7 @@ int daNpc_Kn_c::setSlipPrtcl() {
     mDoMtx_stack_c::multVecZero(&mParticleMngr[1].mPos);
     mParticleMngr[1].mPos.y -= 20.0f;
     mParticleMngr[1].mAngle = current.angle;
-    #ifdef DEBUG
+    #if DEBUG
     mParticleMngr[1].mAngle.y -= (s16) 0x8000;
     #else
     mParticleMngr[1].mAngle.y -= 0x8000;

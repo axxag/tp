@@ -47,13 +47,10 @@ VERSIONS = [
 
 # Versions to disable until properly configured
 DISABLED_VERSIONS = [
-    #4,  # Wii USA Rev 2
     5,  # Wii PAL
-    6,  # Wii JPN
     7,  # Wii KOR
     8,  # Wii USA Kiosk Demo
     9,  # Wii PAL Kiosk Demo
-    #10, # Shield
     11, # Shield Production
 ]
 
@@ -101,6 +98,11 @@ parser.add_argument(
     "--debug",
     action="store_true",
     help="build with debug info (non-matching)",
+)
+parser.add_argument(
+    "--reghio",
+    action="store_true",
+    help="build with regHIO support",
 )
 if not is_windows():
     parser.add_argument(
@@ -261,10 +263,13 @@ cflags_base = [
 
 if config.version == "ShieldD":
     cflags_base.extend(["-O0", "-inline off", "-RTTI on", "-str reuse", "-enc SJIS", "-DDEBUG=1", "-DWIDESCREEN_SUPPORT=1"])
-elif config.version == "RZDE01_00" or config.version == "RZDE01_02" or config.version == "Shield":
+elif config.version in ["RZDE01_00", "RZDE01_02", "RZDJ01", "Shield"]:
     cflags_base.extend(["-O4,p", "-inline auto", "-ipa file", "-RTTI on", "-str reuse", "-enc SJIS", "-DWIDESCREEN_SUPPORT=1"])
 else:
     cflags_base.extend(["-O4,p", "-inline auto", "-RTTI off", "-str reuse", "-multibyte", "-DWIDESCREEN_SUPPORT=1"])
+
+if config.version in ["RZDE01_00", "ShieldD"] or args.debug or args.reghio:
+    cflags_base.extend(["-DENABLE_REGHIO=1"])
 
 USE_REVOLUTION_SDK_VERSIONS = [
     "RZDE01_00", # Wii USA Rev 0
@@ -285,9 +290,9 @@ if config.version in USE_REVOLUTION_SDK_VERSIONS:
 # Debug flags
 if args.debug:
     # Or -sym dwarf-2 for Wii compilers
-    cflags_base.extend(["-sym on", "-DDEBUG=1"])
+    cflags_base.extend(["-sym on", "-DDEBUG=1", "-DDEBUG_DEFINED=1", "-DNDEBUG_DEFINED=0"])
 else:
-    cflags_base.append("-DNDEBUG=1")
+    cflags_base.extend(["-DNDEBUG=1", "-DNDEBUG_DEFINED=1", "-DDEBUG_DEFINED=0"])
 
 # Warning flags
 if args.warn == "all":
@@ -392,12 +397,18 @@ cflags_revolution_base = [
 cflags_revolution_retail = [
     *cflags_revolution_base,
     "-O4,p",
+    "-DNDEBUG=1",
+    "-DNDEBUG_DEFINED=1",
+    "-DDEBUG_DEFINED=0",
 ]
 
 cflags_revolution_debug = [
     *cflags_revolution_base,
     "-opt off",
+    "-inline off",
     "-DDEBUG=1",
+    "-DDEBUG_DEFINED=1",
+    "-DNDEBUG_DEFINED=0",
 ]
 
 # Framework flags
@@ -410,7 +421,7 @@ cflags_framework = [
 ]
 
 if config.version != "ShieldD":
-    if config.version == "RZDE01_00" or config.version == "RZDE01_02" or config.version == "Shield":
+    if config.version in ["RZDE01_00", "RZDE01_02", "RZDJ01", "Shield"]:
         # TODO: whats the correct inlining flag? deferred looks better in some places, others not. something else wrong?
         cflags_framework.extend(["-inline noauto", "-O4,s", "-sym on"])
     else:
@@ -439,7 +450,7 @@ def MWVersion(cfg_version: str | None) -> str:
             return "GC/2.7"
         case "GZ2J01":
             return "GC/2.7"
-        case "RZDE01_00" | "RZDE01_02":
+        case "RZDE01_00" | "RZDE01_02" | "RZDJ01":
             # NOTE: we use a modified version of GC/3.0a3 to be able to handle multi-char constants.
             # This was probably a change made in some compiler version in the early days of transitioning GC to Wii development,
             # but we don't have that version. GC/3.0a3 appears to have the best overall codegen of any available GC/Wii compiler
@@ -452,7 +463,7 @@ def MWVersion(cfg_version: str | None) -> str:
         case _:
             return "GC/2.7"
 
-if config.version == "RZDE01_00" or config.version == "RZDE01_02":
+if config.version in ["RZDE01_00", "RZDE01_02", "RZDJ01"]:
     config.linker_version = "GC/3.0a5"
 else:
     config.linker_version = MWVersion(config.version)
@@ -482,6 +493,14 @@ def RevolutionLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
             "lib": lib_name,
             "mw_version": "Wii/1.0",
             "cflags": [*cflags_revolution_retail, "-DSDK_AUG2010"],
+            "progress_category": "sdk",
+            "objects": objects,
+        }
+    elif config.version == "RZDE01_00":
+        return {
+            "lib": lib_name,
+            "mw_version": "GC/3.0a3",
+            "cflags": [*cflags_revolution_retail, "-DSDK_SEP2006", "-DNW4HBM_DEBUG"],
             "progress_category": "sdk",
             "objects": objects,
         }
@@ -692,7 +711,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "d/d_a_horse_static.cpp"),
             Object(Modded, "d/d_demo.cpp"),
             Object(MatchingFor(ALL_GCN, "Shield"), "d/d_door_param2.cpp"), # debug weak func order
-            Object(NonMatching, "d/d_resorce.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_resorce.cpp"),
             Object(Modded, "d/d_map_path.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_map_path_fmap.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_map_path_dmap.cpp"),
@@ -988,7 +1007,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "JSystem/JStudio/JStudio_JStage/object-ambientlight.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JStudio/JStudio_JStage/object-camera.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JStudio/JStudio_JStage/object-fog.cpp"),
-            Object(NonMatching, "JSystem/JStudio/JStudio_JStage/object-light.cpp"),
+            Object(MatchingFor(ALL_GCN), "JSystem/JStudio/JStudio_JStage/object-light.cpp"),
         ],
     ),
     JSystemLib(
@@ -1009,7 +1028,7 @@ config.libs = [
         "JAudio2",
         [
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASCalc.cpp"),
-            Object(NonMatching, "JSystem/JAudio2/JASTaskThread.cpp"),
+            Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASTaskThread.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASDvdThread.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASCallback.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASHeapCtrl.cpp"),
@@ -1017,13 +1036,13 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASProbe.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASReport.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASCmdStack.cpp"),
-            Object(NonMatching, "JSystem/JAudio2/JASTrack.cpp"),
+            Object(Equivalent, "JSystem/JAudio2/JASTrack.cpp"), # weak func order
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASTrackPort.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASRegisterParam.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASSeqCtrl.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASSeqParser.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASSeqReader.cpp"),
-            Object(NonMatching, "JSystem/JAudio2/JASAramStream.cpp"),
+            Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASAramStream.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASBank.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASBasicBank.cpp"),
             Object(MatchingFor(ALL_GCN, "ShieldD"), "JSystem/JAudio2/JASVoiceBank.cpp"),
@@ -1032,7 +1051,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASBasicWaveBank.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASSimpleWaveBank.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASWSParser.cpp"),
-            Object(NonMatching, "JSystem/JAudio2/JASBNKParser.cpp"), # missing bss var
+            Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASBNKParser.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASWaveArcLoader.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASChannel.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JAudio2/JASLfo.cpp"),
@@ -1084,7 +1103,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "JSystem/JMessage/control.cpp"),
             Object(MatchingFor(ALL_GCN, "ShieldD"), "JSystem/JMessage/data.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JMessage/processor.cpp"),
-            Object(NonMatching, "JSystem/JMessage/resource.cpp"),
+            Object(MatchingFor(ALL_GCN), "JSystem/JMessage/resource.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/JMessage/locale.cpp"),
         ],
     ),
@@ -1104,10 +1123,10 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2SeMgr.cpp"),
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2SeqMgr.cpp"),
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2StatusMgr.cpp"),
-            Object(NonMatching, "Z2AudioLib/Z2SceneMgr.cpp"),
+            Object(Equivalent, "Z2AudioLib/Z2SceneMgr.cpp"), # weak func order
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2FxLineMgr.cpp"),
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2SoundInfo.cpp"),
-            Object(Equivalent, "Z2AudioLib/Z2Audience.cpp"),
+            Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2Audience.cpp"),
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2SoundObject.cpp"),
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2SoundObjMgr.cpp"),
             Object(MatchingFor(ALL_GCN), "Z2AudioLib/Z2Creature.cpp"),
@@ -1210,7 +1229,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DOrthoGraph.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DTevs.cpp"),
             Object(Equivalent, "JSystem/J2DGraph/J2DMaterial.cpp"), # weak func order
-            Object(NonMatching, "JSystem/J2DGraph/J2DMatBlock.cpp"), # weak func order (J3DTevBlock)
+            Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DMatBlock.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DMaterialFactory.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DPrint.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DPane.cpp"),
@@ -1218,7 +1237,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DWindow.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DPicture.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DTextBox.cpp"),
-            Object(NonMatching, "JSystem/J2DGraph/J2DWindowEx.cpp"),
+            Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DWindowEx.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DPictureEx.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DTextBoxEx.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J2DGraph/J2DAnmLoader.cpp"),
@@ -1239,7 +1258,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN, "ShieldD"), "JSystem/J3DGraphBase/J3DShapeDraw.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphBase/J3DShape.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphBase/J3DMaterial.cpp"),
-            Object(Equivalent, "JSystem/J3DGraphBase/J3DMatBlock.cpp"), # virtual function order
+            Object(Equivalent, "JSystem/J3DGraphBase/J3DMatBlock.cpp"), # weak func order (J3DTevBlock)
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphBase/J3DTevs.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphBase/J3DDrawBuffer.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphBase/J3DStruct.cpp"),
@@ -1460,6 +1479,27 @@ config.libs = [
         ],
     ),
     RevolutionLib(
+        "gf",
+        [
+            Object(NonMatching, "revolution/gf/GFGeometry.cpp"),
+            Object(NonMatching, "revolution/gf/GFLight.cpp"),
+            Object(NonMatching, "revolution/gf/GFPixel.cpp"),
+            Object(NonMatching, "revolution/gf/GFTev.cpp"),
+        ],
+    ),
+    RevolutionLib(
+        "aralt",
+        [
+            Object(NonMatching, "revolution/aralt/aralt.c"),
+        ],
+    ),
+    RevolutionLib(
+        "base",
+        [
+            Object(NonMatching, "revolution/base/PPCArch.c"),
+        ],
+    ),
+    RevolutionLib(
         "os",
         [
             Object(MatchingFor("ShieldD"), "revolution/os/OS.c"),
@@ -1496,6 +1536,234 @@ config.libs = [
             Object(MatchingFor("ShieldD"), "revolution/os/OSPlayTime.c"),
             Object(MatchingFor("ShieldD"), "revolution/os/OSLaunch.c"),
             Object(MatchingFor("ShieldD"), "revolution/os/__ppc_eabi_init.cpp"),
+        ],
+    ),
+    RevolutionLib(
+        "exi",
+        [
+            Object(NonMatching, "revolution/exi/EXIBios.c"),
+            Object(NonMatching, "revolution/exi/EXIUart.c"),
+            Object(NonMatching, "revolution/exi/EXICommon.c"),
+        ],
+    ),
+    RevolutionLib(
+        "si",
+        [
+            Object(NonMatching, "revolution/si/SIBios.c"),
+            Object(NonMatching, "revolution/si/SISamplingRate.c"),
+        ],
+    ),
+    RevolutionLib(
+        "vi",
+        [
+            Object(NonMatching, "revolution/vi/vi.c"),
+            Object(NonMatching, "revolution/vi/i2c.c"),
+            Object(NonMatching, "revolution/vi/vi3in1.c"),
+        ],
+    ),
+    RevolutionLib(
+        "mtx",
+        [
+            Object(NonMatching, "revolution/mtx/mtx.c"),
+            Object(NonMatching, "revolution/mtx/mtxvec.c"),
+            Object(NonMatching, "revolution/mtx/mtx44.c"),
+            Object(NonMatching, "revolution/mtx/vec.c"),
+            Object(NonMatching, "revolution/mtx/quat.c"),
+        ],
+    ),
+    RevolutionLib(
+        "gx",
+        [
+            Object(NonMatching, "revolution/gx/GXInit.c", extra_cflags=["-opt nopeephole"]),
+            Object(NonMatching, "revolution/gx/GXFifo.c"),
+            Object(NonMatching, "revolution/gx/GXAttr.c"),
+            Object(NonMatching, "revolution/gx/GXMisc.c"),
+            Object(NonMatching, "revolution/gx/GXGeometry.c"),
+            Object(NonMatching, "revolution/gx/GXFrameBuf.c"),
+            Object(NonMatching, "revolution/gx/GXLight.c", extra_cflags=["-fp_contract off"]),
+            Object(NonMatching, "revolution/gx/GXTexture.c"),
+            Object(NonMatching, "revolution/gx/GXBump.c"),
+            Object(NonMatching, "revolution/gx/GXTev.c"),
+            Object(NonMatching, "revolution/gx/GXPixel.c"),
+            Object(NonMatching, "revolution/gx/GXDraw.c"),
+            Object(NonMatching, "revolution/gx/GXDisplayList.c"),
+            Object(NonMatching, "revolution/gx/GXVert.c"),
+            Object(NonMatching, "revolution/gx/GXTransform.c", extra_cflags=["-fp_contract off"]),
+            Object(NonMatching, "revolution/gx/GXVerify.c"),
+            Object(NonMatching, "revolution/gx/GXVerifXF.c"),
+            Object(NonMatching, "revolution/gx/GXVerifRAS.c"),
+            Object(NonMatching, "revolution/gx/GXSave.c"),
+            Object(NonMatching, "revolution/gx/GXPerf.c"),
+        ],
+    ),
+    RevolutionLib(
+        "dvd",
+        [
+            Object(NonMatching, "revolution/dvd/dvdfs.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/dvd/dvd.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/dvd/dvdqueue.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/dvd/dvderror.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/dvd/dvdidutils.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/dvd/dvdFatal.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/dvd/dvdDeviceError.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/dvd/dvd_broadway.c", extra_cflags=["-char signed"]),
+        ],
+    ),
+    RevolutionLib(
+        "ai",
+        [
+            Object(NonMatching, "revolution/ai/ai.c"),
+        ],
+    ),
+    RevolutionLib(
+        "dsp",
+        [
+            Object(NonMatching, "revolution/dsp/dsp.c"),
+            Object(NonMatching, "revolution/dsp/dsp_debug.c"),
+            Object(NonMatching, "revolution/dsp/dsp_task.c"),
+        ],
+    ),
+    RevolutionLib(
+        "card",
+        [
+            Object(NonMatching, "revolution/card/CARDBios.c"),
+            Object(NonMatching, "revolution/card/CARDUnlock.c"),
+            Object(NonMatching, "revolution/card/CARDRdwr.c"),
+            Object(NonMatching, "revolution/card/CARDBlock.c"),
+            Object(NonMatching, "revolution/card/CARDDir.c"),
+            Object(NonMatching, "revolution/card/CARDCheck.c"),
+            Object(NonMatching, "revolution/card/CARDMount.c"),
+            Object(NonMatching, "revolution/card/CARDFormat.c"),
+            Object(NonMatching, "revolution/card/CARDOpen.c", extra_cflags=["-char signed"]),
+            Object(NonMatching, "revolution/card/CARDCreate.c"),
+            Object(NonMatching, "revolution/card/CARDRead.c"),
+            Object(NonMatching, "revolution/card/CARDWrite.c"),
+            Object(NonMatching, "revolution/card/CARDStat.c"),
+            Object(NonMatching, "revolution/card/CARDNet.c"),
+        ],
+    ),
+    RevolutionLib(
+        "hio2",
+        [
+            Object(NonMatching, "revolution/hio2/hio2.c"),
+        ],
+    ),
+    RevolutionLib(
+        "nand",
+        [
+            Object(NonMatching, "revolution/nand/nand.c"),
+            Object(NonMatching, "revolution/nand/NANDOpenClose.c"),
+            Object(NonMatching, "revolution/nand/NANDCore.c"),
+            Object(NonMatching, "revolution/nand/NANDCheck.c"),
+            Object(NonMatching, "revolution/nand/NANDLogging.c"),
+            Object(NonMatching, "revolution/nand/NANDErrorMessage.c"),
+        ],
+    ),
+    RevolutionLib(
+        "sc",
+        [
+            Object(NonMatching, "revolution/sc/scsystem.c"),
+            Object(NonMatching, "revolution/sc/scapi.c"),
+            Object(NonMatching, "revolution/sc/scapi_prdinfo.c"),
+        ],
+    ),
+    RevolutionLib(
+        "wenc",
+        [
+            Object(NonMatching, "revolution/wenc/wenc.c"),
+        ],
+    ),
+    RevolutionLib(
+        "esp",
+        [
+            Object(NonMatching, "revolution/esp/esp.c"),
+        ],
+    ),
+    RevolutionLib(
+        "ipc",
+        [
+            Object(NonMatching, "revolution/ipc/ipcMain.c"),
+            Object(NonMatching, "revolution/ipc/ipcclt.c"),
+            Object(NonMatching, "revolution/ipc/memory.c"),
+            Object(NonMatching, "revolution/ipc/ipcProfile.c"),
+        ],
+    ),
+    RevolutionLib(
+        "fs",
+        [
+            Object(NonMatching, "revolution/fs/fs.c"),
+        ],
+    ),
+    RevolutionLib(
+        "pad",
+        [
+            Object(NonMatching, "revolution/pad/Padclamp.c"),
+            Object(NonMatching, "revolution/pad/Pad.c"),
+        ],
+    ),
+    RevolutionLib(
+        "wpad",
+        [
+            Object(NonMatching, "revolution/wpad/WPAD.c"),
+            Object(NonMatching, "revolution/wpad/WUD.c"),
+        ],
+    ),
+    RevolutionLib(
+        "euart",
+        [
+            Object(NonMatching, "revolution/euart/euart.c"),
+        ],
+    ),
+    RevolutionLib(
+        "gd",
+        [
+            Object(NonMatching, "revolution/gd/GDBase.c"),
+            Object(NonMatching, "revolution/gd/GDGeometry.c"),
+        ],
+    ),
+    RevolutionLib(
+        "homebuttonLib",
+        [
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/db/db_assert.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/db/db_console.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/db/db_DbgPrintBase.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/db/db_directPrint.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/db/db_mapFile.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_animation.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_arcResourceAccessor.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_bounding.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_common.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_drawInfo.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_group.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_layout.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_material.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_pane.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_picture.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_resourceAccessor.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_textBox.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/lyt/lyt_window.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/math/math_triangular.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/snd/snd_SoundArchivePlayer.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/snd/snd_SoundHandle.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/snd/snd_SoundPlayer.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/snd/snd_SoundStartable.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_binaryFileFormat.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_CharStrmReader.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_CharWriter.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_Font.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_LinkList.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_list.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_ResFont.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_ResFontBase.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_TagProcessorBase.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/nw4hbm/ut/ut_TextWriterBase.cpp"),
+
+            Object(NonMatching, "revolution/homebuttonLib/HBMBase.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/HBMAnmController.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/HBMFrameController.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/HBMGUIManager.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/HBMController.cpp"),
+            Object(NonMatching, "revolution/homebuttonLib/HBMRemoteSpk.cpp"),
         ],
     ),
     {
@@ -1681,7 +1949,7 @@ config.libs = [
             ),
         ],
     },
-    Rel("f_pc_profile_lst", [Object(Matching, "f_pc/f_pc_profile_lst.cpp")]),
+    Rel("f_pc_profile_lst", [Object(MatchingFor(ALL_GCN, "Shield", "ShieldD"), "f_pc/f_pc_profile_lst.cpp")]),
     ActorRel(MatchingFor(ALL_GCN), "d_a_andsw"),
     ActorRel(NonMatching, "d_a_bg"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_bg_obj"),
@@ -1960,17 +2228,17 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_mant"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_mg_fshop"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_mirror"),
-    ActorRel(NonMatching, "d_a_movie_player"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_movie_player"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_myna"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_ni"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_aru"),
     ActorRel(Equivalent, "d_a_npc_ash"), # weak func order (sinShort)
     ActorRel(Equivalent, "d_a_npc_ashB"), # weak func order (sinShort)
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_bans"),
-    ActorRel(NonMatching, "d_a_npc_blue_ns"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_npc_blue_ns"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_bou"),
     ActorRel(Equivalent, "d_a_npc_bouS"), # weak func order (sinShort)
-    ActorRel(Equivalent, "d_a_npc_cdn3"), # weak func order (~csXyz); vtable order
+    ActorRel(MatchingFor(ALL_GCN), "d_a_npc_cdn3"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_chat"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_chin"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_clerka"),
@@ -2058,7 +2326,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_tr"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_uri"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_worm"),
-    ActorRel(NonMatching, "d_a_npc_wrestler"), # regalloc; weak func order (sinShort)
+    ActorRel(Equivalent, "d_a_npc_wrestler"), # weak func order (sinShort)
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_yamid"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_yamis"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_yamit"),

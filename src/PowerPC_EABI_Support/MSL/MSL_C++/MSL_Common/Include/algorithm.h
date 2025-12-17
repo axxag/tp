@@ -31,7 +31,9 @@ inline ForwardIterator lower_bound(ForwardIterator first, ForwardIterator last, 
 template <class ForwardIterator, class T>
 ForwardIterator lower_bound(ForwardIterator first, ForwardIterator last, const T& val) {
 	// For some reason, calling the other lower_bound matches for debug, but not for retail:
-	// return lower_bound(first, last, val, std::detail::less<T, T>());
+	#if DEBUG
+	return lower_bound(first, last, val, std::detail::less<T, T>());
+	#else
 
 	typedef typename iterator_traits<ForwardIterator>::difference_type difference_type;
 	difference_type len = std::distance(first, last);
@@ -50,6 +52,7 @@ ForwardIterator lower_bound(ForwardIterator first, ForwardIterator last, const T
 	}
 
 	return first;
+	#endif
 }
 
 template <class ForwardIterator, class T, class Predicate>
@@ -156,7 +159,7 @@ struct __copy_backward<T, true>
 {
 	static T* copy_backward(T* first, T* last, T* result)
 	{
-#ifdef DEBUG
+#if DEBUG
 		size_t n = static_cast<size_t>(last - first);
 		result -= n;
 		memmove(result, first, n*sizeof(T));
