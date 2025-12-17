@@ -34,7 +34,7 @@ static void damage_check(obj_web0_class* i_this) {
     }
 
     if (i_this->mSphCc.ChkTgHit()) {
-        i_this->mHitTimer = 6;
+        i_this->mHitTimer = 6 * SCALE_TIME;
 
         if (i_this->mSphCc.GetTgHitObj()->ChkAtType(AT_TYPE_IRON_BALL)) {
             i_this->mDeleteTimer = 41;
@@ -52,17 +52,17 @@ static void damage_check(obj_web0_class* i_this) {
             return;
         }
 
-        i_this->mReboundTimer = 20;
+        i_this->mReboundTimer = 20 * SCALE_TIME;
         fopAcM_seStart(i_this, Z2SE_OBJ_WEB_BOUND_L, 0);
     }
 
     if (i_this->mSphCc.ChkCoHit()) {
-        i_this->mReboundTimer = 10;
+        i_this->mReboundTimer = 10 * SCALE_TIME;
     }
 
     if (daPy_getPlayerActorClass()->checkFrontRollCrash() &&
         fopAcM_searchPlayerDistanceXZ(i_this) < i_this->scale.x * 260.0f) {
-        i_this->mReboundTimer = 20;
+        i_this->mReboundTimer = 20 * SCALE_TIME;
         fopAcM_seStart(i_this, Z2SE_OBJ_WEB_BOUND_L, 0);
     }
 }
@@ -120,7 +120,7 @@ static int daObj_Web0_Execute(obj_web0_class* i_this) {
     }
 
     base_p->scale.z =
-        i_this->mReboundTimer * cM_ssin(i_this->mReboundTimer * 0x1900) * (0.075f + TREG_F(0));
+        (i_this->mReboundTimer * DELTA_TIME) * cM_ssin((i_this->mReboundTimer * DELTA_TIME) * 0x1900) * (0.075f + TREG_F(0));
 
     s16 var_r28 = fopAcM_searchPlayerAngleY(base_p);
     s16 sp08 = (var_r28 + 0x4000) - base_p->shape_angle.y;
