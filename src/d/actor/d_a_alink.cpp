@@ -6437,8 +6437,7 @@ void daAlink_c::setFrameCtrl(daPy_frameCtrl_c* i_ctrl, u8 i_attr, s16 i_start, s
         }
     }
 
-    i_rate *= DELTA_TIME; // Boofener: Scale all animation rates for 60fps
-    i_ctrl->setFrameCtrl(i_attr, i_start, i_end, i_rate, i_frame);
+    i_ctrl->setFrameCtrl(i_attr, i_start, i_end, i_rate* DELTA_TIME, i_frame);
 }
 
 const daAlink_BckData* daAlink_c::getMainBckData(daAlink_c::daAlink_ANM i_anmID) const {
@@ -12177,7 +12176,7 @@ void daAlink_c::setSpecialGravity(f32 i_gravity, f32 i_speed, int i_offFlag) {
     }
 
     gravity = i_gravity * DELTA_TIME; // Boofener: applies delta time to gravity
-    maxFallSpeed = i_speed * DELTA_TIME; // Boofener: applies delta time to max fall speed
+    maxFallSpeed = i_speed; // Boofener: applies delta time to max fall speed
 }
 
 void daAlink_c::transAnimeProc(cXyz* param_0, f32 param_1, f32 param_2) {

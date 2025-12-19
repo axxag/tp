@@ -4055,13 +4055,28 @@ void dMeter2Draw_c::drawTransformHintIcon(J2DGrafContext* graf_ctx) {
         return;
     }
 
+    // Only show icon if transformation is allowed
+    daAlink_c* linkPlayer = daAlink_getAlinkActorClass();
+    if (linkPlayer == NULL) {
+        return;
+    }
+
+    // Check transformation conditions (same as dpad down button check)
+    if (linkPlayer->checkEventRun() || linkPlayer->mProcID == daAlink_c::PROC_METAMORPHOSE) {
+        return;
+    }
+
+    daMidna_c* midna = (daMidna_c*)linkPlayer->getMidnaActor();
+    bool can_transform = midna != NULL && midna->checkMetamorphoseEnable();
+
+    if (!can_transform || !linkPlayer->mLinkAcch.ChkGroundHit() ||
+        linkPlayer->checkModeFlg(daAlink_c::MODE_PLAYER_FLY) || linkPlayer->checkMagneBootsOn()) {
+        return;
+    }
+
     // Match dungeon-map behavior: show the opposite form icon as a hint.
     // Human -> show wolf icon; Wolf -> show Link icon.
-    bool nowWolf = false;
-    void* linkPlayer = dComIfGp_getLinkPlayer();
-    if (linkPlayer != NULL) {
-        nowWolf = ((daPy_py_c*)linkPlayer)->checkWolf();
-    }
+    bool nowWolf = linkPlayer->checkWolf();
     int iconIdx = nowWolf ? 1 : 0;
     ResTIMG* tex = mTransformIconTex[iconIdx];
     if (tex == NULL) {

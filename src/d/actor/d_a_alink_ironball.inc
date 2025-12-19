@@ -4,6 +4,7 @@
  */
 
 #include "d/actor/d_a_alink.h"
+#include "SSystem/SComponent/c_counter.h"
 
 cXyz* daAlink_c::getIronBallCenterPos() {
     if (mEquipItem == fpcNm_ITEM_IRONBALL) {
@@ -118,6 +119,7 @@ void daAlink_c::setIronBallModel() {
     field_0xFB8.SetAtSe(dCcD_SE_HAMMER);
     field_0xFB8.SetAtAtp(2);
     field_0xFB8.SetAtMtrl(dCcD_MTRL_NONE);
+    field_0xFB8.OnAtNoConHit();  // 60fps: prevent continuous re-hits while overlapping (ball & chain should not hit twice as often)
     field_0xFB8.SetR(mpHIO->mItem.mIronBall.m.mAttackRadius);
 
     csXyz* var_r28 = mIronBallChainAngle;
@@ -239,13 +241,13 @@ void daAlink_c::setIronBallChainPos() {
             sp2A4 = (*var_r29 - *var_r27) + *var_r26;
 
             if (i == 0) {
-                sp2A4.y += mpHIO->mItem.mIronBall.m.mReturnBallGravity;
+                sp2A4.y += mpHIO->mItem.mIronBall.m.mReturnBallGravity * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
             } else {
-                sp2A4.y += mpHIO->mItem.mIronBall.m.mChainGravity;
+                sp2A4.y += mpHIO->mItem.mIronBall.m.mChainGravity * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
             }
 
             if (sp38 >= 0) {
-                sp2A4.y += mpHIO->mItem.mIronBall.m.mReturnChainAccelY;
+                sp2A4.y += mpHIO->mItem.mIronBall.m.mReturnChainAccelY * DELTA_TIME;  // 60fps: accel is per-30fps-frame
                 sp38--;
             }
 
@@ -271,9 +273,9 @@ void daAlink_c::setIronBallChainPos() {
         for (i = 0; i < mItemMode; i++, var_r29++, var_r26++) {
             sp28C = *var_r29;
             sp2A4 = (*var_r29 - *var_r27) + *var_r26;
-            sp2A4.y += mpHIO->mItem.mIronBall.m.mChainGravity;
+            sp2A4.y += mpHIO->mItem.mIronBall.m.mChainGravity * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
             if (i >= mItemMode - sp34) {
-                sp2A4.y += mpHIO->mItem.mIronBall.m.mReturnChainAccelY;
+                sp2A4.y += mpHIO->mItem.mIronBall.m.mReturnChainAccelY * DELTA_TIME;  // 60fps: accel is per-30fps-frame
             }
 
             sp280 = sp2A4;
@@ -300,7 +302,7 @@ void daAlink_c::setIronBallChainPos() {
             mDoMtx_stack_c::YrotM(sp12);
             mDoMtx_stack_c::multVec(&cXyz::BaseZ, &sp298);
 
-            sp298 *= 15.0f * (1.0f + temp_f29);
+            sp298 *= 15.0f * (1.0f + temp_f29) * DELTA_TIME;  // 60fps: per-frame impulse is per-30fps-frame
             sp38 = 1000;
         } else if (mItemVar0.field_0x3018 == 4) {
             Vec sp268 = {0.0f, 0.0f, 0.0f};
@@ -309,6 +311,7 @@ void daAlink_c::setIronBallChainPos() {
 
             mDoMtx_stack_c::ZXYrotS(mBodyAngle.x, shape_angle.y, 0);
             mDoMtx_stack_c::multVec(&sp268, &sp298);
+            sp298 *= DELTA_TIME;  // 60fps: per-frame impulse is per-30fps-frame
 
             sp38 = 2.0f * (1.0f + sp30->getFrame());
         } else {
@@ -324,9 +327,9 @@ void daAlink_c::setIronBallChainPos() {
             sp2A4 = (*var_r29 - *var_r27) + *var_r26;
 
             if (i == 0) {
-                sp2A4.y += mpHIO->mItem.mIronBall.m.mBallGravity;
+                sp2A4.y += mpHIO->mItem.mIronBall.m.mBallGravity * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
             } else {
-                sp2A4.y += mpHIO->mItem.mIronBall.m.mChainGravity;
+                sp2A4.y += mpHIO->mItem.mIronBall.m.mChainGravity * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
             }
 
             if (sp38 >= 0) {
@@ -348,7 +351,7 @@ void daAlink_c::setIronBallChainPos() {
         }
 
         sp2A4 = mIronBallCenterPos - *mIronBallChainPos;
-        sp2A4.y += mpHIO->mItem.mIronBall.m.mBallGravity;
+        sp2A4.y += mpHIO->mItem.mIronBall.m.mBallGravity * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
 
         if (sp38 >= 0) {
             sp2A4 += sp298;
@@ -370,7 +373,7 @@ void daAlink_c::setIronBallChainPos() {
 
         for (i = 0; i < mItemMode; i++, var_r29++, var_r26++) {
             sp2A4 = (*var_r29 - *var_r27) + *var_r26;
-            sp2A4.y += var_f30;
+            sp2A4.y += var_f30 * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
             sp2A4.normalizeZP();
 
             *var_r29 = *var_r27 + (sp2A4 * 10.0f);
@@ -383,7 +386,7 @@ void daAlink_c::setIronBallChainPos() {
 
         BOOL sp2C = ((mItemVar0.field_0x3018 == 0 && checkUnderMove1BckNoArc(ANM_IRONBALL_WALK)) && mNowAnmPackUnder[1].getRatio() > 0.8f) && (mUnderFrameCtrl[1].getFrame() >= 24.0f || mUnderFrameCtrl[1].getFrame() <= 3.0f);
 
-        f32 temp_f31 = 5.0f * (5.0f * (mNowAnmPackUnder[1].getRatio() - 0.8f));
+        f32 temp_f31 = 5.0f * (5.0f * (mNowAnmPackUnder[1].getRatio() - 0.8f)) * DELTA_TIME;  // 60fps: per-frame sway is per-30fps-frame
         f32 temp_f28 = temp_f31 * cM_scos(shape_angle.y);
         temp_f31 *= cM_ssin(shape_angle.y);
 
@@ -527,7 +530,10 @@ void daAlink_c::setIronBallPos() {
             mDoMtx_MtxToRot(mDoMtx_stack_c::get(), mIronBallChainAngle);
         } else if (mItemVar0.field_0x3018 != 3) {
             if (mItemVar0.field_0x3018 == 4) {
-                mItemMode++;
+                // 60fps: `mItemMode` growth is tuned for 30fps; only increment once per 30fps tick.
+                if (SCALE_TIME <= 1 || (g_Counter.mCounter0 % SCALE_TIME) == 0) {
+                    mItemMode++;
+                }
                 checkIronBallReturnChange();
             } else if (mItemVar0.field_0x3018 == 5 || mItemVar0.field_0x3018 == 6) {
                 *mIronBallChainPos += *field_0x173c.GetCCMoveP();
@@ -552,7 +558,7 @@ void daAlink_c::setIronBallPos() {
                         var_f29 = mpHIO->mItem.mIronBall.m.mBallGravity;
                     }
 
-                    sp10C = mIronBallCenterPos + (*field_0x3848 * 1.25f);
+                    sp10C = mIronBallCenterPos + (*field_0x3848 * (1.25f * DELTA_TIME));  // 60fps: prediction uses per-30fps-frame velocity
 
                     s16 temp_r27 = mpHIO->mItem.mIronBall.m.mThrowChainNum + 0.1f * mIronBallChainPos->abs(mHookshotTopPos);
                     if (temp_r27 > 100) {
@@ -561,12 +567,12 @@ void daAlink_c::setIronBallPos() {
                         mItemMode = temp_r27;
                     }
 
-                    field_0x3848->y += var_f29;
+                    field_0x3848->y += var_f29 * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
                     if (field_0x3848->y < var_f28) {
                         field_0x3848->y = var_f28;
                     }
 
-                    *mIronBallChainPos += *field_0x3848;
+                    *mIronBallChainPos += *field_0x3848 * DELTA_TIME;  // 60fps: velocity is per-30fps-frame
                     spF4 = *mIronBallChainPos - mHookshotTopPos;
                     f32 temp_f1 = spF4.abs();
 
@@ -584,7 +590,7 @@ void daAlink_c::setIronBallPos() {
                     }
 
                     spF4 = sp10C - *mIronBallChainPos;
-                    spF4.y += var_f29;
+                    spF4.y += var_f29 * DELTA_TIME;  // 60fps: gravity is per-30fps-frame
 
                     mIronBallChainAngle->set(spF4.atan2sY_XZ(), spF4.atan2sX_Z(), 0);
 
@@ -621,7 +627,7 @@ void daAlink_c::setIronBallPos() {
 
                         if (field_0x3026 == 0 && var_f31 > 3.0f) {
                             dComIfGp_getVibration().StartShock(3, 1, cXyz(0.0f, 1.0f, 0.0f));
-                            field_0x3026 = 0xF;
+                            field_0x3026 = (s16)(15.0f / DELTA_TIME + 0.5f);  // 60fps: convert 30fps frame count to ticks
                             var_r28 = 1;
 
                             spC4 = mIronBallBgChkPos;
@@ -638,7 +644,7 @@ void daAlink_c::setIronBallPos() {
 
                         if (field_0x3026 == 0 && var_f31 > 3.0f) {
                             dComIfGp_getVibration().StartShock(3, 1, cXyz(0.0f, 1.0f, 0.0f));
-                            field_0x3026 = 0xF;
+                            field_0x3026 = (s16)(15.0f / DELTA_TIME + 0.5f);  // 60fps: convert 30fps frame count to ticks
                             var_r28 = 1;
 
                             spC4 = mIronBallBgChkPos;
@@ -719,7 +725,7 @@ void daAlink_c::setIronBallPos() {
                 }
 
                 if (mItemMode > 6) {
-                    mItemMode -= var_r22;
+                    mItemMode -= (s16)(var_r22 * DELTA_TIME + 0.5f);  // 60fps: chain removal step is per-30fps-frame
                     if (mItemMode <= 6) {
                         mItemVar0.field_0x3018 = 8;
                     }
@@ -747,7 +753,7 @@ void daAlink_c::setIronBallPos() {
                 mDoMtx_stack_c::multVec(&ironBallPosVec, mIronBallChainPos);
                 
                 if (mItemMode > 6) {
-                    mItemMode -= 10;
+                    mItemMode -= (s16)(10.0f * DELTA_TIME + 0.5f);  // 60fps: return/catch chain shortening is per-30fps-frame
                     if (mItemMode < 6) {
                         mItemMode = 6;
                     }
@@ -820,7 +826,7 @@ void daAlink_c::setIronBallReadyAnime() {
     field_0xFB8.ResetAtHit();
     field_0xFB8.SetAtAtp(2);
 
-    field_0x301e = 10;
+    field_0x301e = (s16)(10.0f / DELTA_TIME + 0.5f);  // 60fps: convert 30fps frame count to ticks
     field_0x3020 = 0;
     field_0x3494 = 5.0f;
     mSearchBallScale = 0.0f;

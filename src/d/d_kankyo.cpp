@@ -779,7 +779,7 @@ static void dKy_FiveSenses_fullthrottle_dark_static1() {
     particle_size.y = 1.0f;
     particle_size.z = 1.0f;
 
-    #if !PLATFORM_GCN
+    #if WIDESCREEN_SUPPORT // was !PLATFORM_GCN
     particle_size.x *= mDoGph_gInf_c::getScale();
     #endif
 
@@ -8501,7 +8501,7 @@ void dKy_undwater_filter_draw() {
         size.y = 0.00524f;
         size.z = 0.00524f;
 
-        #if !PLATFORM_GCN
+        #if WIDESCREEN_SUPPORT // was !PLATFORM_GCN
         size.x *= mDoGph_gInf_c::getScale();
         #endif
 
@@ -11758,7 +11758,7 @@ void dKy_bg_MAxx_proc(void* bg_model_p) {
                                                       camera_p->aspect, 0.49f, -0.49f, 0.5f, 0.5f);
                             }
 
-                            #if !PLATFORM_GCN
+                            #if WIDESCREEN_SUPPORT // was !PLATFORM_GCN
                             mDoGph_gInf_c::setWideZoomLightProjection(sp1D8);
                             #endif
                             tex_mtx_inf->setEffectMtx(sp1D8);
@@ -11881,7 +11881,7 @@ void dKy_bg_MAxx_proc(void* bg_model_p) {
                                     Mtx sp178;
                                     C_MTXLightPerspective(sp1A8, var_f28 * 2.8f, 1.0f, 0.5f, 0.5f,
                                                           0.0f, 0.0f);
-                                    #if !PLATFORM_GCN
+                                    #if WIDESCREEN_SUPPORT // was !PLATFORM_GCN
                                     mDoGph_gInf_c::setWideZoomLightProjection(sp1A8);
                                     #endif
                                     spFC.x = spF0.x;
@@ -11921,7 +11921,7 @@ void dKy_bg_MAxx_proc(void* bg_model_p) {
                                 Mtx sp148;
                                 Mtx sp118;
                                 C_MTXLightPerspective(sp148, 170.0f, 1.0f, 1.5f, 1.5f, 0.0f, 0.0f);
-                                #if !PLATFORM_GCN
+                                #if WIDESCREEN_SUPPORT // was !PLATFORM_GCN
                                 mDoGph_gInf_c::setWideZoomLightProjection(sp148);
                                 #endif
                                 spD8.x = player_p->current.pos.x;

@@ -560,8 +560,7 @@ void dMeterMap_c::meter_map_move(u32 param_0) {
     }
 }
 
-void dMeterMap_c::keyCheck() {
-    if (dMw_LEFT_TRIGGER() && !isEventRunCheck() &&
+/* if (dMw_LEFT_TRIGGER() && !isEventRunCheck() &&
         (dMeter2Info_getMapStatus() == 0 || dMeter2Info_getMapStatus() == 1))
     {
         if (dMeter2Info_getMapStatus() == 1) {
@@ -586,7 +585,19 @@ void dMeterMap_c::keyCheck() {
                 dMeter2Info_setMapStatus(1);
             }
         }
-    } else if (dMw_RIGHT_TRIGGER() && !isEventRunCheck() &&
+    } else if (dMw_RIGHT_TRIGGER() && !isEventRunCheck() &&*/
+
+void dMeterMap_c::keyCheck() {
+    // Dpad left: Toggle framerate between 30fps and 60fps
+    if (dMw_LEFT_TRIGGER() && !isEventRunCheck()) {
+        float currentFPS = getTargetFramerate();
+        float newFPS = (currentFPS <= 30.0f) ? 60.0f : 30.0f;
+        setTargetFramerate(newFPS);
+        Z2GetAudioMgr()->seStart(Z2SE_SY_CURSOR_OK, NULL, 0, 0, 1.0f, 1.0f, -1.0f, -1.0f, 0);
+    }
+
+    // Dpad right: Toggle minimap
+    if (dMw_RIGHT_TRIGGER() && !isEventRunCheck() &&
                (dMeter2Info_getMapStatus() == 0 || dMeter2Info_getMapStatus() == 1))
     {
         if (dMeter2Info_getMapStatus() == 0) {
