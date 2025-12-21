@@ -882,7 +882,7 @@ int daHorse_c::setDoubleAnime(f32 i_ratio, f32 i_anmSpeedA, f32 i_anmSpeedB, u16
     m_anmRatio[1].setAnmTransform(bckB);
 
     if (i_morf >= 0.0f) {
-        m_oldFrame->initOldFrameMorf(i_morf, 0, 38);
+        m_oldFrame->initOldFrameMorf(i_morf / DELTA_TIME, 0, 38);
         m_morf_frame = i_morf;
     }
 
@@ -940,7 +940,7 @@ int daHorse_c::setSingleAnime(u16 i_anmIdx, f32 i_speed, f32 i_startF, s16 i_end
     bck->setFrame(frame);
 
     if (i_morf >= 0.0f) {
-        m_oldFrame->initOldFrameMorf(i_morf, 0, 38);
+        m_oldFrame->initOldFrameMorf(i_morf / DELTA_TIME, 0, 38);
         m_morf_frame = i_morf;
     }
 
