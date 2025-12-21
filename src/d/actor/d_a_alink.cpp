@@ -6437,7 +6437,7 @@ void daAlink_c::setFrameCtrl(daPy_frameCtrl_c* i_ctrl, u8 i_attr, s16 i_start, s
         }
     }
 
-    i_ctrl->setFrameCtrl(i_attr, i_start, i_end, i_rate* DELTA_TIME, i_frame);
+    i_ctrl->setFrameCtrl(i_attr, i_start, i_end, i_rate, i_frame);
 }
 
 const daAlink_BckData* daAlink_c::getMainBckData(daAlink_c::daAlink_ANM i_anmID) const {
