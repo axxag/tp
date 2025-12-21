@@ -1820,21 +1820,18 @@ int mDoGph_Painter() {
                 fapGm_HIO_c::startCpuTimer();
                 #endif
 
-                if (fapGmHIO_getParticle()) {
-                    #if WIDESCREEN_SUPPORT
-                    if (mDoGph_gInf_c::isWideZoom()) {
-                        ortho.setOrtho(0.0f, 0.0f, 608.0f, 448.0f, 100000.0f, -100000.0f);
-                    } else
-                    #endif
-                    {
-                        ortho.setOrtho(mDoGph_gInf_c::getMinXF(), mDoGph_gInf_c::getMinYF(),
-                                       mDoGph_gInf_c::getWidthF(), mDoGph_gInf_c::getHeightF(),
-                                       100000.0f, -100000.0f);
-                    }
-                    ortho.setPort();
-
-                    Mtx m3;
-                    MTXTrans(m3, FB_WIDTH / 2, FB_HEIGHT / 2, 0.0f);
+	                if (fapGmHIO_getParticle()) {
+	                    #if WIDESCREEN_SUPPORT
+	                    // Keep the widescreen 2D ortho even during WideZoom; forcing 608x448 here
+	                    // makes 2D particle-based filters render as 4:3 and then clamp/stretch.
+	                    #endif
+	                    ortho.setOrtho(mDoGph_gInf_c::getMinXF(), mDoGph_gInf_c::getMinYF(),
+	                                   mDoGph_gInf_c::getWidthF(), mDoGph_gInf_c::getHeightF(),
+	                                   100000.0f, -100000.0f);
+	                    ortho.setPort();
+	
+	                    Mtx m3;
+	                    MTXTrans(m3, FB_WIDTH / 2, FB_HEIGHT / 2, 0.0f);
                     JPADrawInfo draw_info2(m3, 0.0f, FB_HEIGHT, 0.0f, FB_WIDTH);
                     dComIfGp_particle_draw2Dgame(&draw_info2);
                 }
