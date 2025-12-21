@@ -1597,7 +1597,7 @@ void dMenu_Collect2D_c::wait_proc() {
         if (mpStick->checkUpTrigger() && mFramerateSelection > 0) {
             mFramerateSelection--;
             Z2GetAudioMgr()->seStart(Z2SE_SY_MENU_CURSOR_COMMON, NULL, 0, 0, 1.0f, 1.0f, -1.0f, -1.0f, 0);
-        } else if (mpStick->checkDownTrigger() && mFramerateSelection < 1) {
+        } else if (mpStick->checkDownTrigger() && mFramerateSelection < 2) {
             mFramerateSelection++;
             Z2GetAudioMgr()->seStart(Z2SE_SY_MENU_CURSOR_COMMON, NULL, 0, 0, 1.0f, 1.0f, -1.0f, -1.0f, 0);
         }
@@ -1608,6 +1608,7 @@ void dMenu_Collect2D_c::wait_proc() {
             switch (mFramerateSelection) {
                 case 0: newFramerate = 30.0f; break;
                 case 1: newFramerate = 60.0f; break;
+                case 2: newFramerate = 1000.0f; break;
             }
             setTargetFramerate(newFramerate);
             Z2GetAudioMgr()->seStart(Z2SE_SY_CURSOR_OK, NULL, 0, 0, 1.0f, 1.0f, -1.0f, -1.0f, 0);
@@ -2110,13 +2111,13 @@ void dMenu_Collect2D_c::_draw() {
 
     // Boofener: Draw framerate selector menu
     if (mFramerateMenuOpen) {
-        const char* framerateOptions[] = {"30 FPS", "60 FPS"};
+        const char* framerateOptions[] = {"30 FPS", "60 FPS", "Fake ass unlimited FPS"};
 
         // Draw semi-transparent background box
         f32 menuX = 250.0f;
         f32 menuY = 150.0f;
         f32 menuWidth = 140.0f;
-        f32 menuHeight = 80.0f;
+        f32 menuHeight = 120.0f;
 
         JGeometry::TBox2<f32> menuBox(menuX, menuY, menuX + menuWidth, menuY + menuHeight);
         grafPort->setColor(JUtility::TColor(0, 0, 0, 180));
@@ -2138,7 +2139,7 @@ void dMenu_Collect2D_c::_draw() {
             else activeFPSIndex = 1;
 
             // Draw each option
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < sizeof(framerateOptions) / sizeof(framerateOptions[0]); i++) {
                 f32 optionY = menuY + 50.0f + (i * 22.0f);
 
                 // Draw cursor for selected option
