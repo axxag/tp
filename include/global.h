@@ -123,6 +123,10 @@ inline f32 ScaleHUDXLeft(f32 baseX) {
 void updateDeltaTime();
 void setTargetFramerate(float fps);
 float getTargetFramerate();
+void setSelectedFramerate(float fps);
+float getSelectedFramerate();
+void setStaleMode(int enabled);
+int getStaleMode();
 int shouldUpdateGameLogic();
 
 // hack to make strings with no references compile properly
