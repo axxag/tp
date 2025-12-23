@@ -1384,7 +1384,8 @@ void dMeter2Draw_c::drawPikari(f32 i_posX, f32 i_posY, f32* i_framep, f32 i_scal
     if (param_9 != 3 && param_9 != 4 && param_9 != 5 && dMsgObject_isTalkNowCheck()) {
         *i_framep = 0.0f;
     } else {
-        *i_framep += param_8;
+        // FIX: Scale animation speed with DELTA_TIME for correct frame rate
+        *i_framep += param_8 * DELTA_TIME;
         if (*i_framep > var_f31) {
             if (param_9 == 1 || param_9 == 2 || param_9 == 3) {
                 *i_framep = 18.0f;
