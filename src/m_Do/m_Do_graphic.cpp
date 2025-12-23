@@ -503,38 +503,54 @@ f32 mDoGph_gInf_c::m_scale = 1.0f;
 
 f32 mDoGph_gInf_c::m_invScale = 1.0f;
 
+#if WIDESCREEN_SUPPORT
+int mDoGph_gInf_c::m_maxX = 640 - 1;
+int mDoGph_gInf_c::m_maxY = 456 - 1;
+int mDoGph_gInf_c::m_width = 640;
+int mDoGph_gInf_c::m_height = 456;
+f32 mDoGph_gInf_c::m_maxXF = 640.0f - 1;
+f32 mDoGph_gInf_c::m_maxYF = 456.0f - 1;
+f32 mDoGph_gInf_c::m_widthF = 640.0f;
+f32 mDoGph_gInf_c::m_heightF = 456.0f;
+#else
 int mDoGph_gInf_c::m_maxX = 608 - 1;
-
 int mDoGph_gInf_c::m_maxY = 448 - 1;
-
 int mDoGph_gInf_c::m_width = 608;
-
 int mDoGph_gInf_c::m_height = 448;
-
 f32 mDoGph_gInf_c::m_maxXF = 608.0f - 1;
-
 f32 mDoGph_gInf_c::m_maxYF = 448.0f - 1;
-
 f32 mDoGph_gInf_c::m_widthF = 608.0f;
-
 f32 mDoGph_gInf_c::m_heightF = 448.0f;
+#endif
 
 struct tvSize {
     u16 width;
     u16 height;
 };
+#if WIDESCREEN_SUPPORT
+const tvSize l_tvSize[2] = {
+    {640, 456},
+    {808, 448},
+};
+#else
 const tvSize l_tvSize[2] = {
     {608, 448},
     {808, 448},
 };
+#endif
 
 void mDoGph_gInf_c::setTvSize() {
     const tvSize* tvsize = &l_tvSize[mWide];
 
     m_width = tvsize->width;
     m_height = tvsize->height;
+#if WIDESCREEN_SUPPORT
+    m_minX = -((m_width - 640) / 2);
+    m_minY = -((m_height - 456) / 2);
+#else
     m_minX = -((m_width - 608) / 2);
     m_minY = -((m_height - 448) / 2);
+#endif
     m_maxX = m_minX + m_width;
     m_maxY = m_minY + m_height;
 
