@@ -729,14 +729,13 @@ void dMenu_save_c::saveSelAnm() {
 }
 
 void dMenu_save_c::selFileWakuAnm() {
-    // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-    mFileWakuAnmFrame += 2.0f * DELTA_TIME;
+    mFileWakuAnmFrame += 2.0f;
     if (mFileWakuAnmFrame >= mpFileWakuAnm->getFrameMax()) {
         mFileWakuAnmFrame -= mpFileWakuAnm->getFrameMax();
     }
     mpFileWakuAnm->setFrame(mFileWakuAnmFrame);
 
-    mFileWakuRotAnmFrame += 2.0f * DELTA_TIME;
+    mFileWakuRotAnmFrame += 2.0f;
     if (mFileWakuRotAnmFrame >= mpFileWakuRotAnm->getFrameMax()) {
         mFileWakuRotAnmFrame -= mpFileWakuRotAnm->getFrameMax();
     }
@@ -744,20 +743,19 @@ void dMenu_save_c::selFileWakuAnm() {
 }
 
 void dMenu_save_c::bookIconAnm() {
-    // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-    field_0x154 += 2.0f * DELTA_TIME;
+    field_0x154 += 2.0f;
     if (field_0x154 >= field_0x150->getFrameMax()) {
         field_0x154 -= field_0x150->getFrameMax();
     }
     field_0x150->setFrame(field_0x154);
 
-    field_0x15c += 2.0f * DELTA_TIME;
+    field_0x15c += 2.0f;
     if (field_0x15c >= field_0x158->getFrameMax()) {
         field_0x15c -= field_0x158->getFrameMax();
     }
     field_0x158->setFrame(field_0x15c);
 
-    field_0x164 += 2.0f * DELTA_TIME;
+    field_0x164 += 2.0f;
     if (field_0x164 >= field_0x160->getFrameMax()) {
         field_0x164 -= field_0x160->getFrameMax();
     }
@@ -1729,8 +1727,7 @@ void dMenu_save_c::openSaveSelect3() {
         var_r29 = ketteiTxtDispAnm();
 
         if (field_0x74[mSelectedFile] != SelEndFrameTbl[mSelectedFile]) {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            field_0x74[mSelectedFile] += 2.0f * DELTA_TIME;
+            field_0x74[mSelectedFile] += 2.0f;
 
             if (field_0x74[mSelectedFile] > SelEndFrameTbl[mSelectedFile]) {
                 field_0x74[mSelectedFile] = SelEndFrameTbl[mSelectedFile];
@@ -1847,8 +1844,7 @@ void dMenu_save_c::saveSelectMoveAnime() {
         selWakuAnmComplete = selectWakuAlpahAnm(mLastSelFile);
 
         if (field_0x74[mLastSelFile] != SelStartFrameTbl[mLastSelFile]) {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            field_0x74[mLastSelFile] -= 2.0f * DELTA_TIME;
+            field_0x74[mLastSelFile] -= 2.0f;
 
             if (field_0x74[mLastSelFile] < SelStartFrameTbl[mLastSelFile]) {
                 field_0x74[mLastSelFile] = SelStartFrameTbl[mLastSelFile];
@@ -1866,8 +1862,7 @@ void dMenu_save_c::saveSelectMoveAnime() {
         var_r28 = mpBookWaku[mSelectedFile]->alphaAnime(g_msHIO.mEffectDispFrames, 0, 0xFF, 1);
 
         if (field_0x74[mSelectedFile] != SelEndFrameTbl[mSelectedFile]) {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            field_0x74[mSelectedFile] += 2.0f * DELTA_TIME;
+            field_0x74[mSelectedFile] += 2.0f;
 
             if (field_0x74[mSelectedFile] > SelEndFrameTbl[mSelectedFile]) {
                 field_0x74[mSelectedFile] = SelEndFrameTbl[mSelectedFile];
@@ -2284,13 +2279,13 @@ bool dMenu_save_c::selectDataBaseMoveAnm() {
     if (mDataBaseMoveAnmFrame != mDataBaseMoveFrameMax) {
         // FIX: Scale animation speed with DELTA_TIME for correct frame rate
         if (mDataBaseMoveAnmFrame < mDataBaseMoveFrameMax) {
-            mDataBaseMoveAnmFrame += 2.0f * DELTA_TIME;
+            mDataBaseMoveAnmFrame += 2.0f;
 
             if (mDataBaseMoveAnmFrame > mDataBaseMoveFrameMax) {
                 mDataBaseMoveAnmFrame = mDataBaseMoveFrameMax;
             }
         } else {
-            mDataBaseMoveAnmFrame -= 2.0f * DELTA_TIME;
+            mDataBaseMoveAnmFrame -= 2.0f;
 
             if (mDataBaseMoveAnmFrame < mDataBaseMoveFrameMax) {
                 mDataBaseMoveAnmFrame = mDataBaseMoveFrameMax;
@@ -2347,15 +2342,13 @@ void dMenu_save_c::selectDataMoveAnmInitSet(int param_0, int param_1) {
 bool dMenu_save_c::selectDataMoveAnm() {
     if (field_0x74[mSelectedFile] != field_0x80) {
         if (field_0x74[mSelectedFile] < field_0x80) {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            field_0x74[mSelectedFile] += 2.0f * DELTA_TIME;
+            field_0x74[mSelectedFile] += 2.0f;
 
             if (field_0x74[mSelectedFile] > field_0x80) {
                 field_0x74[mSelectedFile] = field_0x80;
             }
         } else {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            field_0x74[mSelectedFile] -= 2.0f * DELTA_TIME;
+            field_0x74[mSelectedFile] -= 2.0f;
 
             if (field_0x74[mSelectedFile] < field_0x80) {
                 field_0x74[mSelectedFile] = field_0x80;
@@ -2404,15 +2397,13 @@ void dMenu_save_c::yesnoMenuMoveAnmInitSet(int anmFrame, int frameMax, u8 param_
 bool dMenu_save_c::yesnoMenuMoveAnm() {
     if (mYesNoMoveAnmFrame != mYesNoMoveAnmMax) {
         if (mYesNoMoveAnmFrame < mYesNoMoveAnmMax) {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            mYesNoMoveAnmFrame += 2.0f * DELTA_TIME;
+            mYesNoMoveAnmFrame += 2.0f;
 
             if (mYesNoMoveAnmFrame > mYesNoMoveAnmMax) {
                 mYesNoMoveAnmFrame = mYesNoMoveAnmMax;
             }
         } else {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            mYesNoMoveAnmFrame -= 2.0f * DELTA_TIME;
+            mYesNoMoveAnmFrame -= 2.0f;
 
             if (mYesNoMoveAnmFrame < mYesNoMoveAnmMax) {
                 mYesNoMoveAnmFrame = mYesNoMoveAnmMax;
@@ -2457,15 +2448,13 @@ bool dMenu_save_c::yesnoSelectMoveAnm(u8 param_0) {
     if (mYesNoPrevCursor != 0xFF) {
         if (field_0x8c[mYesNoPrevCursor] != YnSelStartFrameTbl[mYesNoPrevCursor][param_0]) {
             if (field_0x8c[mYesNoPrevCursor] < YnSelStartFrameTbl[mYesNoPrevCursor][param_0]) {
-                // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-                field_0x8c[mYesNoPrevCursor] += 2.0f * DELTA_TIME;
+                field_0x8c[mYesNoPrevCursor] += 2.0f;
 
                 if (field_0x8c[mYesNoPrevCursor] > YnSelStartFrameTbl[mYesNoPrevCursor][param_0]) {
                     field_0x8c[mYesNoPrevCursor] = YnSelStartFrameTbl[mYesNoPrevCursor][param_0];
                 }
             } else {
-                // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-                field_0x8c[mYesNoPrevCursor] -= 2.0f * DELTA_TIME;
+                field_0x8c[mYesNoPrevCursor] -= 2.0f;
 
                 if (field_0x8c[mYesNoPrevCursor] < YnSelStartFrameTbl[mYesNoPrevCursor][param_0]) {
                     field_0x8c[mYesNoPrevCursor] = YnSelStartFrameTbl[mYesNoPrevCursor][param_0];
@@ -2482,15 +2471,13 @@ bool dMenu_save_c::yesnoSelectMoveAnm(u8 param_0) {
     if (mYesNoCursor != 0xFF) {
         if (field_0x8c[mYesNoCursor] != YnSelEndFrameTbl[mYesNoCursor][param_0]) {
             if (field_0x8c[mYesNoCursor] < YnSelEndFrameTbl[mYesNoCursor][param_0]) {
-                // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-                field_0x8c[mYesNoCursor] += 2.0f * DELTA_TIME;
+                field_0x8c[mYesNoCursor] += 2.0f;
 
                 if (field_0x8c[mYesNoCursor] > YnSelEndFrameTbl[mYesNoCursor][param_0]) {
                     field_0x8c[mYesNoCursor] = YnSelEndFrameTbl[mYesNoCursor][param_0];
                 }
             } else {
-                // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-                field_0x8c[mYesNoCursor] -= 2.0f * DELTA_TIME;
+                field_0x8c[mYesNoCursor] -= 2.0f;
 
                 if (field_0x8c[mYesNoCursor] < YnSelEndFrameTbl[mYesNoCursor][param_0]) {
                     field_0x8c[mYesNoCursor] = YnSelEndFrameTbl[mYesNoCursor][param_0];
@@ -2545,15 +2532,13 @@ void dMenu_save_c::errorMoveAnmInitSet(int param_0, int param_1) {
 bool dMenu_save_c::errorMoveAnm() {
     if (field_0xb8 != field_0xbc) {
         if (field_0xb8 < field_0xbc) {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            field_0xb8 += 2.0f * DELTA_TIME;
+            field_0xb8 += 2.0f;
 
             if (field_0xb8 > field_0xbc) {
                 field_0xb8 = field_0xbc;
             }
         } else {
-            // FIX: Scale animation speed with DELTA_TIME for correct frame rate
-            field_0xb8 -= 2.0f * DELTA_TIME;
+            field_0xb8 -= 2.0f;
 
             if (field_0xb8 < field_0xbc) {
                 field_0xb8 = field_0xbc;
