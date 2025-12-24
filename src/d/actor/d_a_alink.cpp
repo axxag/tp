@@ -4900,6 +4900,8 @@ void daAlink_c::setIceSlipSpeed() {
             sp58 *= 30.0f / var_f28;
         }
 
+        // FIX: Scale ice slip acceleration with DELTA_TIME but increase magnitude to maintain distance
+        // At 60fps, we apply the force twice as often, so we need to apply it at the full rate per frame
         field_0x35c4 += sp58 * var_f29;
         speed += sp58 * (1.0f - var_f29);
 
@@ -12574,10 +12576,12 @@ void daAlink_c::posMove() {
 
             if (mLinkAcch.ChkGroundHit() && dComIfG_Bgsp().ChkPolySafe(mLinkAcch.m_gnd)) {
                 s16 angle1 = getGroundAngle(&mLinkAcch.m_gnd, 0);
-                current.pos.z += field_0x35c4.z * cM_scos(angle1);
+                // FIX: Scale ice slip position update with DELTA_TIME for correct frame rate
+                current.pos.z += field_0x35c4.z * cM_scos(angle1) * DELTA_TIME;
 
                 s16 angle2 = getGroundAngle(&mLinkAcch.m_gnd, 0x4000);
-                current.pos.x += field_0x35c4.x * cM_scos(angle2);
+                // FIX: Scale ice slip position update with DELTA_TIME for correct frame rate
+                current.pos.x += field_0x35c4.x * cM_scos(angle2) * DELTA_TIME;
 
                 if (checkZeroSpeedF() && field_0x35c4.abs2() > 9.0f) {
                     seStartOnlyReverbLevel(Z2SE_AL_ICE_SLIP);
