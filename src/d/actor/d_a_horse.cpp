@@ -835,7 +835,6 @@ void daHorse_c::resetBasAnime() {
 
 int daHorse_c::setDoubleAnime(f32 i_ratio, f32 i_anmSpeedA, f32 i_anmSpeedB, u16 i_anmIdxA, u16 i_anmIdxB,
                               f32 i_morf) {
-
     J3DAnmTransform* temp_r26 = m_anmRatio[0].getAnmTransform();
     if (i_morf < 0.0f && (m_anmIdx[0] != ANM_HS_RUN_DASH || i_anmIdxA != ANM_HS_RUN_SLOW) && (m_anmIdx[0] != i_anmIdxA || m_anmIdx[1] != i_anmIdxB)) {
         i_morf = 3.0f;
@@ -898,7 +897,6 @@ int daHorse_c::setDoubleAnime(f32 i_ratio, f32 i_anmSpeedA, f32 i_anmSpeedB, u16
 
 int daHorse_c::setSingleAnime(u16 i_anmIdx, f32 i_speed, f32 i_startF, s16 i_endF, f32 i_morf,
                               BOOL i_isDemoAnm) {
-
     J3DAnmTransform* bck;
     if (i_isDemoAnm) {
         if (i_anmIdx & 0x8000) {
@@ -2070,8 +2068,7 @@ int daHorse_c::setSpeedAndAngle() {
         if (dComIfG_Bgsp().ChkPolySafe(m_acch.m_gnd) && dComIfG_Bgsp().GetGroundCode(m_acch.m_gnd) == 11 && var_f31 > (m_normalMaxSpeedF + (0.5f * m_lashAddSpeed))) {
             var_f31 = m_normalMaxSpeedF + (0.5f * m_lashAddSpeed);
         }
-
-
+    
         if (var_f31 > fabsf(speedF)) {
             cLib_chaseF(&speedF, var_f31, var_f29);
         } else if (checkStateFlg0(FLG0_UNK_4) || (!dComIfGp_event_runCheck() && !daAlink_getAlinkActorClass()->checkHorseRide() && !checkStateFlg0(daHorse_FLG0(FLG0_RODEO_MODE | FLG0_UNK_10000000)) && m_procID == PROC_MOVE_e)) {
@@ -2086,7 +2083,6 @@ int daHorse_c::setSpeedAndAngle() {
             } else {
                 var_f29 = m_hio->m.deceleration;
             }
-
             cLib_chaseF(&speedF, var_f31, var_f29);
         }
     }
@@ -3165,9 +3161,7 @@ void daHorse_c::setNeckAnimeMorf() {
 }
 
 void daHorse_c::setNeckAnime(u16 i_anmIdx, f32 i_speed, f32 i_startF, s16 i_endF) {
-
     J3DAnmTransform* bck = (J3DAnmTransform*)dComIfG_getObjectRes(l_arcName, i_anmIdx);
-
     s16 endF;
     if (i_endF < 0) {
         endF = bck->getFrameMax();
@@ -3230,11 +3224,11 @@ void daHorse_c::setLashCnt() {
         }
     } else if (checkStateFlg0(FLG0_UNK_1)) {
         if (m_lashAccelerationTime > 0) {
-            m_lashAccelerationTime--;  // Boofener: Decrement scaled timer
+            m_lashAccelerationTime--;
         }
 
         if (m_lashRecoverTime > 0) {
-            m_lashRecoverTime--;  // Boofener: Decrement scaled timer
+            m_lashRecoverTime--;
             if (m_lashRecoverTime == 0) {
                 if (m_lashCnt == 0) {
                     m_lashCnt = 6;

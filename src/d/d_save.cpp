@@ -1005,6 +1005,7 @@ void dSv_player_config_c::init() {
     mCalValue = 0;
     mCameraControl = 0;
     mPointer = 1;
+    mCameraHInvert = 1;
 }
 
 u32 dSv_player_config_c::checkVibration() const {

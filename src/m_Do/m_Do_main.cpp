@@ -288,7 +288,7 @@ void HeapCheck::heapDisplay() const {
 int mDoMain::argument = -1;
 #endif
 
-s8 mDoMain::developmentMode = DEVELOPMENT_MODE;
+s8 mDoMain::developmentMode = -1;
 
 #if DEBUG
 u32 mDoMain::gameHeapSize = 0xFFFFFFFF;

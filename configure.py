@@ -14,7 +14,6 @@
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -265,7 +264,7 @@ cflags_base = [
 ]
 
 if config.version in ["RZDE01_00", "RZDE01_02", "RZDP01", "RZDJ01", "Shield", "ShieldD"]:
-    cflags_base.extend(["-enc SJIS", "-DWIDESCREEN_SUPPORT=1"])
+    cflags_base.extend(["-enc SJIS"])
 else:
     cflags_base.extend(["-multibyte", "-DWIDESCREEN_SUPPORT=1"])
 
@@ -288,13 +287,9 @@ if config.version in USE_REVOLUTION_SDK_VERSIONS:
 # Debug flags
 if args.debug:
     # Or -sym dwarf-2 for Wii compilers
-    cflags_base.extend(["-sym on", "-DDEBUG=1", "-DDEBUG_DEFINED=1", "-DNDEBUG_DEFINED=0"])
+    cflags_base.extend(["-sym on", "-DDEBUG=1"])
 elif config.version == "ShieldD":
     cflags_base.extend(["-DDEBUG=1"])
-
-# Development mode flag (read from .env via environment)
-dev_mode = os.environ.get("DEVELOPMENT_MODE", "true").lower() == "true"
-cflags_base.append(f"-DDEVELOPMENT_MODE={1 if dev_mode else 0}")
 
 # Warning flags
 if args.warn == "all":
@@ -358,18 +353,12 @@ cflags_revolution_base = [
 cflags_revolution_retail = [
     *cflags_revolution_base,
     "-O4,p",
-    "-DNDEBUG=1",
-    "-DNDEBUG_DEFINED=1",
-    "-DDEBUG_DEFINED=0",
 ]
 
 cflags_revolution_debug = [
     *cflags_revolution_base,
     "-opt off",
     "-inline off",
-    "-DDEBUG=1",
-    "-DDEBUG_DEFINED=1",
-    "-DNDEBUG_DEFINED=0",
 ]
 
 # Framework flags
@@ -524,8 +513,7 @@ def JSystemLib(lib_name: str, objects: List[Object], progress_category: str="thi
 
 Matching = True                   # Object matches and should be linked
 NonMatching = False               # Object does not match and should not be linked
-Equivalent = False                # Object should be linked when configured with --non-matching
-Modded = config.non_matching
+Equivalent = config.non_matching  # Object should be linked when configured with --non-matching
 
 
 ALL_GCN = ["GZ2E01", "GZ2P01", "GZ2J01"]
@@ -579,7 +567,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "m_Do/m_Do_audio.cpp"),
             Object(MatchingFor(ALL_GCN), "m_Do/m_Do_controller_pad.cpp"),
             Object(NonMatching, "m_Do/m_Re_controller_pad.cpp"),
-            Object(Modded, "m_Do/m_Do_graphic.cpp"),
+            Object(MatchingFor(ALL_GCN), "m_Do/m_Do_graphic.cpp"),
             Object(MatchingFor(ALL_GCN), "m_Do/m_Do_machine.cpp"),
             Object(MatchingFor(ALL_GCN), "m_Do/m_Do_mtx.cpp"),
             Object(Equivalent, "m_Do/m_Do_ext.cpp"), # weak func order
@@ -698,10 +686,10 @@ config.libs = [
             Object(MatchingFor(ALL_GCN, "Shield"), "d/d_a_item_static.cpp"),
             Object(MatchingFor(ALL_GCN, "Shield"), "d/d_a_shop_item_static.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_a_horse_static.cpp"),
-            Object(Modded, "d/d_demo.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_demo.cpp"),
             Object(MatchingFor(ALL_GCN, "Shield"), "d/d_door_param2.cpp"), # debug weak func order
             Object(MatchingFor(ALL_GCN), "d/d_resorce.cpp"),
-            Object(Modded, "d/d_map_path.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_map_path.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_map_path_fmap.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_map_path_dmap.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_event.cpp"),
@@ -714,7 +702,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN, "Shield"), "d/d_particle_name.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_particle_copoly.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_path.cpp"),
-            Object(Modded, "d/d_drawlist.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_drawlist.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_kankyo_data.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_kankyo_wether.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_kankyo_rain.cpp"),
@@ -756,7 +744,7 @@ config.libs = [
             Object(NonMatching, "d/d_jpreviewer.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_spline_path.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_item_data.cpp"),
-            Object(Modded, "d/d_item.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_item.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_tresure.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_model.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_eye_hl.cpp"),
@@ -764,13 +752,13 @@ config.libs = [
             Object(Equivalent, "d/d_debug_viewer.cpp"), # debug weak func order
             Object(NonMatching, "d/d_debug_pad.cpp"),
             Object(NonMatching, "d/d_debug_camera.cpp"),
-            Object(Modded, "d/actor/d_a_alink.cpp"),
+            Object(Equivalent, "d/actor/d_a_alink.cpp"), # weak func order, vtable order
             Object(MatchingFor(ALL_GCN), "d/actor/d_a_itembase.cpp"),
             Object(MatchingFor(ALL_GCN), "d/actor/d_a_no_chg_room.cpp"),
             Object(Equivalent, "d/actor/d_a_npc.cpp"), # weak func order (daNpcF_MoveBgActor_c::Delete)
             Object(MatchingFor(ALL_GCN), "d/actor/d_a_npc_cd.cpp"),
             Object(NonMatching, "d/actor/d_a_npc_cd2.cpp"), # stripped vtable order
-            Object(Modded, "d/actor/d_a_obj_item.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/actor/d_a_obj_item.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_insect.cpp"),
             Object(MatchingFor(ALL_GCN), "d/actor/d_a_obj_ss_base.cpp"),
             Object(MatchingFor(ALL_GCN), "d/actor/d_a_player.cpp"),
@@ -793,7 +781,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "d/d_ky_thunder.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_kantera_icon_meter.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_menu_calibration.cpp"),
-            Object(Modded, "d/d_menu_collect.cpp"), # weak func order (dMenu_Collect2D_c::draw())
+            Object(NonMatching, "d/d_menu_collect.cpp"), # weak func order (dMenu_Collect2D_c::draw())
             Object(MatchingFor(ALL_GCN), "d/d_menu_dmap.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_menu_dmap_map.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_menu_map_common.cpp"),
@@ -810,14 +798,14 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "d/d_menu_save.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_menu_skill.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_menu_window_HIO.cpp"),
-            Object(Modded, "d/d_menu_window.cpp"), # weak func order (dDlst_MENU_CAPTURE_c::draw)
+            Object(Equivalent, "d/d_menu_window.cpp"), # weak func order (dDlst_MENU_CAPTURE_c::draw)
             Object(MatchingFor(ALL_GCN), "d/d_meter_HIO.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_meter_button.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_meter_haihai.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_meter_hakusha.cpp"),
-            Object(Modded, "d/d_meter_map.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_meter_map.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_meter_string.cpp"),
-            Object(Modded, "d/d_meter2_draw.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_meter2_draw.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_meter2_info.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_meter2.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_msg_out_font.cpp"),
@@ -845,8 +833,8 @@ config.libs = [
             Object(NonMatching, "d/d_npc.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_npc_lib.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_ovlp_fade.cpp"),
-            Object(Modded, "d/d_ovlp_fade2.cpp"),
-            Object(Modded, "d/d_ovlp_fade3.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_ovlp_fade2.cpp"),
+            Object(MatchingFor(ALL_GCN), "d/d_ovlp_fade3.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_pane_class.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_pane_class_alpha.cpp"),
             Object(MatchingFor(ALL_GCN), "d/d_pane_class_ex.cpp"),
@@ -926,7 +914,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "SSystem/SComponent/c_m3d_g_sph.cpp"),
             Object(MatchingFor(ALL_GCN), "SSystem/SComponent/c_m3d_g_tri.cpp"), # debug weak func order
             Object(MatchingFor("ShieldD"), "SSystem/SComponent/c_m3d_g_vtx.cpp"),
-            Object(Modded, "SSystem/SComponent/c_lib.cpp"),
+            Object(MatchingFor(ALL_GCN), "SSystem/SComponent/c_lib.cpp"),
             Object(MatchingFor(ALL_GCN), "SSystem/SComponent/c_angle.cpp"),
             Object(MatchingFor(ALL_GCN), "SSystem/SStandard/s_basic.cpp"),
         ],
@@ -1408,7 +1396,7 @@ config.libs = [
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphAnimator/J3DModelData.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphAnimator/J3DMtxBuffer.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphAnimator/J3DModel.cpp"),
-            Object(Modded, "JSystem/J3DGraphAnimator/J3DAnimation.cpp"),
+            Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphAnimator/J3DAnimation.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphAnimator/J3DMaterialAnm.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphAnimator/J3DSkinDeform.cpp"),
             Object(MatchingFor(ALL_GCN), "JSystem/J3DGraphAnimator/J3DCluster.cpp"),
@@ -2160,21 +2148,21 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_vrbox"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_vrbox2"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_arrow"),
-    ActorRel(Modded, "d_a_boomerang"),  # Boofener: Modified for DELTA_TIME scaling
+    ActorRel(MatchingFor(ALL_GCN), "d_a_boomerang"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_crod"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_demo00"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_disappear"),
     ActorRel(Equivalent, "d_a_mg_rod"), # weak func order
     ActorRel(MatchingFor(ALL_GCN), "d_a_midna"),
-    ActorRel(Modded, "d_a_nbomb"), # weak func order
+    ActorRel(Equivalent, "d_a_nbomb"), # weak func order
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_life_container"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_yousei"),
-    ActorRel(Modded, "d_a_spinner"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_spinner"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_suspend"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_tag_attention"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_alldie"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_andsw2"),
-    ActorRel(Modded, "d_a_bd"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_bd"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_canoe"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_cstaF"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_demo_item"),
@@ -2182,7 +2170,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_dn"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_fm"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_ga"),
-    ActorRel(Modded, "d_a_e_hb"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_hb"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_nest"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_rd"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_econt"),
@@ -2199,7 +2187,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_henna"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_kakashi"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_kkri"),
-    ActorRel(Modded, "d_a_npc_kolin"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_npc_kolin"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_maro"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_taro"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_tkj"),
@@ -2228,7 +2216,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_sWallShutter"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_stick"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_stoneMark"),
-    ActorRel(Modded, "d_a_obj_swpropeller"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_obj_swpropeller"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_swpush5"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_yobikusa"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_scene_exit2"),
@@ -2262,7 +2250,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_b_gnd"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_b_go"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_b_gos"),
-    ActorRel(Modded, "d_a_b_mgn"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_b_mgn"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_b_ob"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_b_oh"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_b_oh2"),
@@ -2286,17 +2274,17 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_door_push"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_ai"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_arrow"),
-    ActorRel(Modded, "d_a_e_ba"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_ba"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_bee"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_bg"),
-    ActorRel(Modded, "d_a_e_bi"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_bi"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_bi_leaf"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_bs"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_bu"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_bug"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_cr"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_cr_egg"),
-    ActorRel(Modded, "d_a_e_db"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_db"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_db_leaf"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_dd"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_df"),
@@ -2324,13 +2312,13 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_mb"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_md"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_mf"),
-    ActorRel(Modded, "d_a_e_mk"),
-    ActorRel(Modded, "d_a_e_mk_bo"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_mk"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_mk_bo"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_mm"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_mm_mt"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_ms"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_nz"),
-    ActorRel(Modded, "d_a_e_oc"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_oc"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_oct_bg"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_ot"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_ph"),
@@ -2347,7 +2335,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_sh"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_sm"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_sm2"),
-    ActorRel(Modded, "d_a_e_st"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_st"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_st_line"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_sw"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_th"),
@@ -2359,7 +2347,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_vt"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_warpappear"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_wb"),
-    ActorRel(Modded, "d_a_e_ws"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_e_ws"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_ww"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_yc"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_yd"),
@@ -2376,7 +2364,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_e_zs"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_formation_mng"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_guard_mng"),
-    ActorRel(Modded, "d_a_horse"), # weak func order (J3DMtxCalcNoAnm)
+    ActorRel(Equivalent, "d_a_horse"), # weak func order (J3DMtxCalcNoAnm)
     ActorRel(Equivalent, "d_a_hozelda"), # weak func order (J3DMtxCalcNoAnm)
     ActorRel(MatchingFor(ALL_GCN), "d_a_izumi_gate"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_kago"),
@@ -2444,7 +2432,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_kn"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_knj"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_kolinb"),
-    ActorRel(Modded, "d_a_npc_ks"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_npc_ks"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_kyury"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_len"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_lf"),
@@ -2461,7 +2449,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_pachi_taro"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_passer"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_passer2"),
-    ActorRel(Modded, "d_a_npc_post"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_npc_post"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_pouya"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_prayer"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_npc_raca"),
@@ -2574,14 +2562,14 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_gb"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_geyser"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_glowSphere"),
-    ActorRel(Modded, "d_a_obj_gm"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_obj_gm"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_goGate"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_gomikabe"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_gra2"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_graWall"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_gra_rock"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_grave_stone"),
-    ActorRel(Modded, "d_a_obj_groundwater"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_obj_groundwater"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_grz_rock"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_h_saku"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_hakai_brl"),
@@ -2629,7 +2617,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_laundry_rope"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_lbox"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_lp"),
-    ActorRel(Modded, "d_a_obj_lv1Candle00"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_obj_lv1Candle00"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_lv1Candle01"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_lv3Candle"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_lv3Water"),
@@ -2692,7 +2680,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_mirror_screw"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_mirror_table"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_msima"),
-    ActorRel(Modded, "d_a_obj_mvstair"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_obj_mvstair"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_myogan"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_nagaisu"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_nan"),
@@ -2707,7 +2695,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_pdtile"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_pdwall"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_picture"),
-    ActorRel(Modded, "d_a_obj_pillar"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_obj_pillar"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_pleaf"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_poCandle"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_poFire"),
@@ -2798,7 +2786,7 @@ config.libs = [
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_waterfall"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_wchain"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_wdStick"),
-    ActorRel(Modded, "d_a_obj_web0"),
+    ActorRel(MatchingFor(ALL_GCN), "d_a_obj_web0"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_web1"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_well_cover"),
     ActorRel(MatchingFor(ALL_GCN), "d_a_obj_wflag"),
