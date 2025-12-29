@@ -1329,7 +1329,7 @@ void daAlink_c::setWolfBarrierHitEffect(dBgS_LinChk& param_0) {
     }
 
     mDoAud_seStart(Z2SE_OBJ_BARRIER_COLLISION, param_0.GetCrossP(), 0, 0);
-    field_0x3100 = 3;
+    field_0x3100 = (s16)(3 * SCALE_TIME);
 }
 
 void daAlink_c::setCutWaterDropEffect() {
@@ -2064,13 +2064,13 @@ void daAlink_lockCursor_c::update() {
         mLockCursorAngle = 21.0f;
     }
 
-    mLockCursorAngle += 0.9f;
+    mLockCursorAngle += 0.9f * DELTA_TIME;
 
     if (mLockCursorAngle >= 50.0f) {
         mLockCursorAngle += -29.0f;
     }
 
-    field_0x30 += 0.9f;
+    field_0x30 += 0.9f; //what it do
 
     if (field_0x30 >= field_0x1c->getFrameMax()) {
         field_0x30 -= field_0x1c->getFrameMax();

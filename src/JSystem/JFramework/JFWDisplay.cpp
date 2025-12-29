@@ -18,7 +18,7 @@ void JFWDisplay::ctor_subroutine(bool enableAlpha) {
     mZClear = 0xFFFFFF;
     mGamma = 0;
     mFader = NULL;
-    mFrameRate = 1;
+    mFrameRate = 1; 
     mTickRate = 0;
     mCombinationRatio = 0.0f;
     field_0x30 = 0;
@@ -238,7 +238,7 @@ void JFWDisplay::beginRender() {
     }
 
     waitForTick(mTickRate, mFrameRate);
-    JUTVideo::getManager()->waitRetraceIfNeed();
+    // JUTVideo::getManager()->waitRetraceIfNeed();  // Boofener: Disabled VSync to unlock framerate
 
     OSTick tick = OSGetTick();
     field_0x30 = tick - field_0x2c;
@@ -346,7 +346,7 @@ void JFWDisplay::waitBlanking(int param_0) {
 }
 
 static void waitForTick(u32 p1, u16 p2) {
-    if (p1 != 0) {
+    if (false) { // Boofener: Changed p1 != 0 to False (unlock fps)
         static OSTime nextTick = OSGetTime();
         OSTime time = OSGetTime();
         while (time < nextTick) {
@@ -356,15 +356,69 @@ static void waitForTick(u32 p1, u16 p2) {
         nextTick = time + p1;
     }
     else {
-        static u32 nextCount = VIGetRetraceCount();
-        u32 uVar1 = (p2 == 0) ? 1 : p2;
-        OSMessage msg;
+        // Boofener: Frame limiter for unlocked render loop.
+        //
+        // What this replaces:
+        // - A simple "measure last frame in milliseconds and spin-wait until >= targetFrameTimeMS".
+        //   That version used `OSTicksToMilliseconds(...)` (integer truncation), which quantizes time
+        //   to whole milliseconds and can create periodic cadence hiccups (especially when target
+        //   frametimes are not an integer number of milliseconds).
+        //
+        // Current approach:
+        // - Keep a target `nextFrameTime` in OS ticks and spin until `OSGetTime()` reaches it.
+        // - Advance `nextFrameTime` by a fixed `ticksPerFrame` each frame and carry remainder forward.
+        //   This avoids drift and reduces periodic spikes.
+        // - Use integer math (no `double`) because Metrowerks can otherwise emit helper calls like
+        //   `__cvt_sll_dbl` that aren't linked in this project.
+        static OSTime nextFrameTime = 0;
+        static OSTime lastFrameTicks = 0;
+
+        const float targetFPS = getTargetFramerate();
+        if (targetFPS <= 0.0f) {
+            nextFrameTime = 0;
+            lastFrameTicks = 0;
+            return;
+        }
+
+        const u32 ticksPerSecond = (u32)OSSecondsToTicks(1);
+        const u32 fpsMilli = (u32)(targetFPS * 1000.0f + 0.5f);
+        const u64 numerator = (u64)ticksPerSecond * 1000ull;
+        const OSTime ticksPerFrame = (fpsMilli != 0) ? (OSTime)((numerator + (fpsMilli / 2)) / fpsMilli) : 0;
+        const OSTime now = OSGetTime();
+
+        if (ticksPerFrame <= 0) {
+            nextFrameTime = 0;
+            lastFrameTicks = 0;
+            return;
+        }
+
+        if (nextFrameTime == 0 || lastFrameTicks != ticksPerFrame) {
+            nextFrameTime = now + ticksPerFrame;
+            lastFrameTicks = ticksPerFrame;
+            return;
+        }
+
+        // Spin-wait until we hit the target time (tick-accurate; avoids millisecond truncation jitter).
+        OSTime currentTime = now;
+        while (currentTime < nextFrameTime) {
+            currentTime = OSGetTime();
+        }
+
+        // Carry remainder forward to avoid drift and periodic spikes.
         do {
-            if (!OSReceiveMessage(JUTVideo::getManager()->getMessageQueue(), &msg, OS_MESSAGE_BLOCK)) {
-                msg = 0;
-            }
-        } while (((intptr_t)msg - (intptr_t)nextCount) < 0);
-        nextCount = (intptr_t)msg + uVar1;
+            nextFrameTime += ticksPerFrame;
+        } while (nextFrameTime <= currentTime);
+
+        // Original:
+        // static u32 nextCount = VIGetRetraceCount();
+        // u32 uVar1 = (p2 == 0) ? 1 : p2;
+        // OSMessage msg;
+        // do {
+        //     if (!OSReceiveMessage(JUTVideo::getManager()->getMessageQueue(), &msg, OS_MESSAGE_BLOCK)) {
+        //         msg = 0;
+        //     }
+        // } while (((intptr_t)msg - (intptr_t)nextCount) < 0);
+        // nextCount = (intptr_t)msg + uVar1;
     }
 }
 

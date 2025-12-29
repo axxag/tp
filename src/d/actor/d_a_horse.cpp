@@ -174,7 +174,7 @@ void daHorseRein_c::setReinPos(int param_0) {
         spBC.normalizeZP();
 
         spC8 += spBC * field_0x18;
-        field_0x18 -= 1.1764706f;
+        field_0x18 -= 1.1764706f * DELTA_TIME;
     }
 
     spC8.normalizeZP();
@@ -319,7 +319,7 @@ void daHorse_c::coHitCallbackBoarHit(fopAc_ac_c* i_hitActor, dCcD_GObjInf* i_hit
                 }
             }
 
-            m_cowHit = 5;
+            m_cowHit = 5 / DELTA_TIME;
             dComIfGp_getVibration().StartShock(VIBMODE_S_POWER3, 1, cXyz(0.0f, 1.0f, 0.0f));
             if (checkStateFlg0(FLG0_UNK_100000)) {
                 procLargeDamageInit();
@@ -342,7 +342,7 @@ void daHorse_c::coHitCallbackCowHit(fopAc_ac_c* i_hitActor) {
                 field_0x1702 = 0x500;
             }
 
-            m_cowHit = 5;
+            m_cowHit = 5 / DELTA_TIME;
         }
     } else if (fopAcM_GetName(i_hitActor) == PROC_ALINK) {
         if (daAlink_getAlinkActorClass()->checkSlideMode()) {
@@ -835,6 +835,7 @@ void daHorse_c::resetBasAnime() {
 
 int daHorse_c::setDoubleAnime(f32 i_ratio, f32 i_anmSpeedA, f32 i_anmSpeedB, u16 i_anmIdxA, u16 i_anmIdxB,
                               f32 i_morf) {
+
     J3DAnmTransform* temp_r26 = m_anmRatio[0].getAnmTransform();
     if (i_morf < 0.0f && (m_anmIdx[0] != ANM_HS_RUN_DASH || i_anmIdxA != ANM_HS_RUN_SLOW) && (m_anmIdx[0] != i_anmIdxA || m_anmIdx[1] != i_anmIdxB)) {
         i_morf = 3.0f;
@@ -882,7 +883,7 @@ int daHorse_c::setDoubleAnime(f32 i_ratio, f32 i_anmSpeedA, f32 i_anmSpeedB, u16
     m_anmRatio[1].setAnmTransform(bckB);
 
     if (i_morf >= 0.0f) {
-        m_oldFrame->initOldFrameMorf(i_morf, 0, 38);
+        m_oldFrame->initOldFrameMorf(i_morf / DELTA_TIME, 0, 38);
         m_morf_frame = i_morf;
     }
 
@@ -897,6 +898,7 @@ int daHorse_c::setDoubleAnime(f32 i_ratio, f32 i_anmSpeedA, f32 i_anmSpeedB, u16
 
 int daHorse_c::setSingleAnime(u16 i_anmIdx, f32 i_speed, f32 i_startF, s16 i_endF, f32 i_morf,
                               BOOL i_isDemoAnm) {
+
     J3DAnmTransform* bck;
     if (i_isDemoAnm) {
         if (i_anmIdx & 0x8000) {
@@ -939,7 +941,7 @@ int daHorse_c::setSingleAnime(u16 i_anmIdx, f32 i_speed, f32 i_startF, s16 i_end
     bck->setFrame(frame);
 
     if (i_morf >= 0.0f) {
-        m_oldFrame->initOldFrameMorf(i_morf, 0, 38);
+        m_oldFrame->initOldFrameMorf(i_morf / DELTA_TIME, 0, 38);
         m_morf_frame = i_morf;
     }
 
@@ -999,7 +1001,7 @@ int daHorse_c::checkDemoAction() {
         current.angle.y = shape_angle.y;
         field_0x1728 = 0;
         field_0x16b8 = 0;
-        m_callMoveTimer = 450;
+        m_callMoveTimer = 450 / DELTA_TIME;
         speedF = m_normalMaxSpeedF;
         return procMoveInit();
     }
@@ -1099,7 +1101,7 @@ void daHorse_c::setStickRodeoMove() {
             if (((!checkStateFlg0(FLG0_UNK_1) && m_rodeoPath->m_points[m_rodeoPoint].mArg0 != 1) || m_rodeoPointCnt >= 15) && m_procID == PROC_MOVE_e) {
                 onEndResetStateFlg0(ERFLG0_UNK_200);
                 if (!checkStateFlg0(FLG0_UNK_1)) {
-                    field_0x16bc = cM_rndF(3.0f);
+                    field_0x16bc = cM_rndF(3.0f) / DELTA_TIME;
                 }
             }
 
@@ -1400,7 +1402,7 @@ void daHorse_c::acceptPlayerRide() {
 void daHorse_c::setStickData() {
     s16 stick_angle;
     if (checkStateFlg0(daHorse_FLG0(FLG0_RODEO_MODE | FLG0_UNK_10000000))) {
-        field_0x16c2 = 2000;
+        field_0x16c2 = 2000;  // Boofener: Not scaled - ratio adjustment handles frame rate
     } else {
         field_0x16c2 = m_hio->m.max_turn;
     }
@@ -1756,7 +1758,7 @@ int daHorse_c::checkHorseNoMove(int param_0) {
                         if (var_f30 <= 101.0f) {
                             if (param_0 != 0 && !player->checkHorseGetOffMode()) {
                                 onStateFlg0(FLG0_UNK_40000);
-                                field_0x1704 = 30;
+                                field_0x1704 = 30 / DELTA_TIME;
                             }
                             return 2;
                         }
@@ -1772,7 +1774,7 @@ int daHorse_c::checkHorseNoMove(int param_0) {
                 if (var_f30 <= 101.0f) {
                     if (sp8 > sp14 && param_0 != 0) {
                         onStateFlg0(FLG0_UNK_40000);
-                        field_0x1704 = 30;
+                        field_0x1704 = 30 / DELTA_TIME;
                     }
                     return 2;
                 }
@@ -1784,7 +1786,7 @@ int daHorse_c::checkHorseNoMove(int param_0) {
                     if (var_f30 <= 101.0f) {
                         if (param_0 != 0) {
                             onStateFlg0(FLG0_UNK_40000);
-                            field_0x1704 = 30;
+                            field_0x1704 = 30 / DELTA_TIME;
                         }
                         return 2;
                     }
@@ -1956,7 +1958,7 @@ int daHorse_c::setSpeedAndAngle() {
     }
 
     if (field_0x1702 != 0) {
-        shape_angle.y += field_0x1702;
+        shape_angle.y += field_0x1702 * DELTA_TIME;
         current.angle.y = shape_angle.y;
     }
 
@@ -2068,7 +2070,8 @@ int daHorse_c::setSpeedAndAngle() {
         if (dComIfG_Bgsp().ChkPolySafe(m_acch.m_gnd) && dComIfG_Bgsp().GetGroundCode(m_acch.m_gnd) == 11 && var_f31 > (m_normalMaxSpeedF + (0.5f * m_lashAddSpeed))) {
             var_f31 = m_normalMaxSpeedF + (0.5f * m_lashAddSpeed);
         }
-    
+
+
         if (var_f31 > fabsf(speedF)) {
             cLib_chaseF(&speedF, var_f31, var_f29);
         } else if (checkStateFlg0(FLG0_UNK_4) || (!dComIfGp_event_runCheck() && !daAlink_getAlinkActorClass()->checkHorseRide() && !checkStateFlg0(daHorse_FLG0(FLG0_RODEO_MODE | FLG0_UNK_10000000)) && m_procID == PROC_MOVE_e)) {
@@ -2083,7 +2086,7 @@ int daHorse_c::setSpeedAndAngle() {
             } else {
                 var_f29 = m_hio->m.deceleration;
             }
-    
+
             cLib_chaseF(&speedF, var_f31, var_f29);
         }
     }
@@ -2611,9 +2614,9 @@ int daHorse_c::setLegAngle(f32 param_0, int param_1, int param_2, s16* param_3) 
         sp98 = *sp14 - *sp18;
 
         if (i == 0) {
-            sp14->y += param_0 * var_f27;
+            sp14->y += param_0 * var_f27 * DELTA_TIME;
         } else {
-            sp14->y += param_0 * (1.0f - var_f27);
+            sp14->y += param_0 * (1.0f - var_f27) * DELTA_TIME;
         }
 
         if (sp14->y >= sp1C->y) {
@@ -2721,7 +2724,7 @@ void daHorse_c::footBgCheck() {
                 footdata_p->field_0xc = footdata_p->field_0x18 + sp7C;
             }
         } else {
-            footdata_p->field_0x1 = 5;
+            footdata_p->field_0x1 = 5 / DELTA_TIME;
         }
 
         footdata_p->field_0x18 = footdata_p->field_0xc;
@@ -3077,7 +3080,7 @@ bool daHorse_c::checkSpecialWallHitSubstance(const cXyz& param_0) const {
 }
 
 void daHorse_c::setServiceWaitTimer() {
-    m_serviceWaitTimer = cM_rndF(80.0f) + 150.0f;
+    m_serviceWaitTimer = (cM_rndF(80.0f) + 150.0f) / DELTA_TIME;
 }
 
 BOOL daHorse_c::checkServiceWaitAnime() {
@@ -3162,8 +3165,9 @@ void daHorse_c::setNeckAnimeMorf() {
 }
 
 void daHorse_c::setNeckAnime(u16 i_anmIdx, f32 i_speed, f32 i_startF, s16 i_endF) {
+
     J3DAnmTransform* bck = (J3DAnmTransform*)dComIfG_getObjectRes(l_arcName, i_anmIdx);
-    
+
     s16 endF;
     if (i_endF < 0) {
         endF = bck->getFrameMax();
@@ -3203,18 +3207,18 @@ void daHorse_c::setLashCnt() {
             if (!checkStateFlg0(FLG0_PLAYER_BACK_RIDE_LASH)) {
                 m_lashCnt--;
                 if (m_lashCnt == 0) {
-                    m_lashRecoverTime = m_hio->m.full_spur_recovery_time;
+                    m_lashRecoverTime = m_hio->m.full_spur_recovery_time / DELTA_TIME;  // Boofener: Scale timer init for DELTA_TIME
                 } else {
-                    m_lashRecoverTime = m_hio->m.spur_recovery_time;
+                    m_lashRecoverTime = m_hio->m.spur_recovery_time / DELTA_TIME;  // Boofener: Scale timer init for DELTA_TIME
                 }
             } else {
                 offStateFlg0(FLG0_PLAYER_BACK_RIDE_LASH);
             }
 
             if (checkStateFlg0(FLG0_UNK_2000)) {
-                m_lashAccelerationTime = m_hio->m.kakariko_lash_acceleration_time;
+                m_lashAccelerationTime = m_hio->m.kakariko_lash_acceleration_time / DELTA_TIME;  // Boofener: Scale timer init for DELTA_TIME
             } else {
-                m_lashAccelerationTime = m_hio->m.lash_acceleration_time;
+                m_lashAccelerationTime = m_hio->m.lash_acceleration_time / DELTA_TIME;  // Boofener: Scale timer init for DELTA_TIME
             }
 
             onResetStateFlg0(RFLG0_LASH_DASH_START);
@@ -3226,11 +3230,11 @@ void daHorse_c::setLashCnt() {
         }
     } else if (checkStateFlg0(FLG0_UNK_1)) {
         if (m_lashAccelerationTime > 0) {
-            m_lashAccelerationTime--;
+            m_lashAccelerationTime--;  // Boofener: Decrement scaled timer
         }
 
         if (m_lashRecoverTime > 0) {
-            m_lashRecoverTime--;
+            m_lashRecoverTime--;  // Boofener: Decrement scaled timer
             if (m_lashRecoverTime == 0) {
                 if (m_lashCnt == 0) {
                     m_lashCnt = 6;
@@ -3240,7 +3244,7 @@ void daHorse_c::setLashCnt() {
                 } else {
                     m_lashCnt++;
                     if (m_lashCnt < 6) {
-                        m_lashRecoverTime = m_hio->m.continuous_spur_recovery_time;
+                        m_lashRecoverTime = m_hio->m.continuous_spur_recovery_time / DELTA_TIME;  // Boofener: Scale timer init for DELTA_TIME
                     }
 
                     if (!dComIfGp_event_runCheck()) {
@@ -3474,10 +3478,10 @@ int daHorse_c::procWait() {
         if (!dComIfGp_event_runCheck() && !player->checkHorseRideReady() && m_anmIdx[0] != ANM_HS_EXCITEMENT && m_anmIdx[0] != ANM_HS_EXCITEMENT_2) {
             if (cM_rnd() < 0.7f) {
                 setSingleAnime(ANM_HS_EXCITEMENT_2, 1.0f, 0.0f, -1, 3.0f, 0);
-                field_0x170c = 80.0f + cM_rndF(30.0f);
+                field_0x170c = (80.0f + cM_rndF(30.0f)) / DELTA_TIME;
             } else {
                 setSingleAnime(ANM_HS_EXCITEMENT, 1.0f, 0.0f, -1, 3.0f, 0);
-                field_0x170c = 30.0f + cM_rndF(30.0f);
+                field_0x170c = (30.0f + cM_rndF(30.0f)) / DELTA_TIME;
             }
         }
     } else if ((m_anmIdx[0] == ANM_HS_EXCITEMENT || m_anmIdx[0] == ANM_HS_EXCITEMENT_2) && !m_frameCtrl[0].checkPass(0.0f)) {
@@ -3828,7 +3832,7 @@ int daHorse_c::procTurnInit(int param_0) {
     }
 
     field_0x1720 = 0;
-    field_0x170c = 30.0f + cM_rndF(30.0f);
+    field_0x170c = (30.0f + cM_rndF(30.0f)) / DELTA_TIME;
     field_0x16b7 = 2;
 
     acceptPlayerRide();
@@ -4025,7 +4029,7 @@ int daHorse_c::procJumpInit(int param_0) {
     field_0x171c = 0;
     field_0x17d0 = current.pos;
     field_0x1778 = 1.5f * (1.5f * (field_0x1768 * field_0x1768));
-    field_0x1722 = 300;
+    field_0x1722 = 300 / DELTA_TIME;
     return 1;
 }
 

@@ -40,7 +40,7 @@ void cLib_memSet(void* ptr, int value, u32 num) {
 f32 cLib_addCalc(f32* pvalue, f32 target, f32 scale, f32 maxStep, f32 minStep) {
     f32 step = 0.0f;
     if (*pvalue != target) {
-        step = scale * (target - *pvalue);
+        step = (scale * DELTA_TIME) * (target - *pvalue);
         if (step >= minStep || step <= -minStep) {
             if (step > maxStep) {
                 step = maxStep;
@@ -84,9 +84,11 @@ void cLib_addCalc2(f32* pvalue, f32 target, f32 scale, f32 maxStep) {
     if (*pvalue != target) {
         f32 step = scale * (target - *pvalue);
         if (step > maxStep) {
-            step = maxStep;
+            // DELTA_TIME scales the amount by which the target value is approached based on framerate
+            step = maxStep * DELTA_TIME;
         } else if (step < -maxStep) {
-            step = -maxStep;
+            // DELTA_TIME scales the amount by which the target value is approached based on framerate
+            step = -maxStep * DELTA_TIME;
         }
         *pvalue += step;
     }
@@ -126,8 +128,9 @@ f32 cLib_addCalcPos(cXyz* ppos, const cXyz& target, f32 scale, f32 maxStep, f32 
         if (step < minStep) {
             *ppos = target;
         } else {
-            step *= scale;
-            diff *= scale;
+            // DELTA_TIME scales the amount by which the step is scaled
+            step *= scale * DELTA_TIME;
+            diff *= scale * DELTA_TIME;
             if (!cLib_IsZero(step)) {
                 if (step > maxStep) {
                     diff *= (maxStep / step);
@@ -190,10 +193,12 @@ f32 cLib_addCalcPosXZ(cXyz* ppos, const cXyz& target, f32 scale, f32 maxStep, f3
  */
 void cLib_addCalcPos2(cXyz* ppos, const cXyz& target, f32 scale, f32 maxStep) {
     if (*ppos != target) {
-        cXyz diff = (*ppos - target) * scale;
+        // DELTA_TIME scales the amount by which the step is scaled
+        cXyz diff = (*ppos - target) * (scale * DELTA_TIME);
         if (diff.abs() > maxStep) {
             diff = diff.normZP();
-            diff *= maxStep;
+            // DELTA_TIME scales the amount by which the target value is approached based on framerate
+            diff *= maxStep * DELTA_TIME;
         }
         *ppos -= diff;
     }
@@ -234,7 +239,7 @@ void cLib_addCalcPosXZ2(cXyz* ppos, const cXyz& target, f32 scale, f32 maxStep) 
 s16 cLib_addCalcAngleS(s16* pvalue, s16 target, const s16 scale, s16 maxStep, s16 minStep) {
     s16 diff = target - *pvalue;
     if (*pvalue != target) {
-        s16 step = (diff) / scale;
+        s16 step = diff / scale;
         if (step > minStep || step < -minStep) {
             if (step > maxStep) {
                 step = maxStep;
@@ -242,16 +247,16 @@ s16 cLib_addCalcAngleS(s16* pvalue, s16 target, const s16 scale, s16 maxStep, s1
             if (step < -maxStep) {
                 step = -maxStep;
             }
-            *pvalue += step;
+            *pvalue += step * DELTA_TIME;
         } else {
             if (0 <= diff) {
-                *pvalue += minStep;
+                *pvalue += minStep * DELTA_TIME;
                 diff = target - *pvalue;
                 if (0 >= diff) {
                     *pvalue = target;
                 }
             } else {
-                *pvalue -= minStep;
+                *pvalue -= minStep * DELTA_TIME;
                 diff = target - *pvalue;
                 if (0 <= diff) {
                     *pvalue = target;
@@ -274,9 +279,9 @@ void cLib_addCalcAngleS2(s16* pvalue, s16 target, s16 scale, s16 maxStep) {
     s16 diff = target - *pvalue;
     s16 step = diff / scale;
     if (step > maxStep) {
-        *pvalue += maxStep;
+        *pvalue += maxStep * DELTA_TIME;
     } else if (step < -maxStep) {
-        *pvalue -= maxStep;
+        *pvalue -= maxStep * DELTA_TIME;
     } else {
         *pvalue += step;
     }
@@ -347,8 +352,9 @@ int cLib_chaseF(f32* pvalue, f32 target, f32 step) {
         if (*pvalue > target) {
             step = -step;
         }
-        *pvalue += step;
-        if (step * (*pvalue - target) >= 0) {
+        // DELTA_TIME scales the amount by which the target value is approached based on framerate
+        *pvalue += step * DELTA_TIME;
+        if ((step * DELTA_TIME) * (*pvalue - target) >= 0) {
             *pvalue = target;
             return 1;
         }
@@ -411,12 +417,12 @@ int cLib_chasePosXZ(cXyz* pvalue, const cXyz& target, f32 step) {
  * @return TRUE when target is reached, FALSE otherwise
  */
 int cLib_chaseAngleS(s16* pvalue, s16 target, s16 step) {
-    if (step) {
+    if (step * DELTA_TIME) {
         if ((s16)(*pvalue - target) > 0) {
             step = -step;
         }
-        *pvalue += step;
-        if (step * (s16)(*pvalue - target) >= 0) {
+        *pvalue += step * DELTA_TIME;
+        if ((step * DELTA_TIME) * (s16)(*pvalue - target) >= 0) {
             *pvalue = target;
             return 1;
         }

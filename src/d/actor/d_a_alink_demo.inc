@@ -370,7 +370,7 @@ int daAlink_c::checkDemoAction() {
 
             field_0x2f98 = mDemo.getParam0();
             if (field_0x2f98 == 1) {
-                field_0x2fcc = 1;
+                field_0x2fcc = (u8)(1 * SCALE_TIME);
             }
 
             return procWolfSideStepInit(0);
@@ -584,7 +584,7 @@ void daAlink_c::setDemoData() {
 
         dComIfGp_clearPlayerStatus0(0, 0x600000);
         offNoResetFlg3(FLG3_COPY_ROD_THROW_AFTER);
-        field_0x30d0 = 0;
+        mWolfDashDistTimer = 0;
 
         if (mProcID == PROC_SUBJECTIVITY) {
             if (checkWolf()) {
@@ -2164,7 +2164,8 @@ int daAlink_c::procCoGetItem() {
         }
     }
 
-    field_0x3478 += 1.0f;
+    // FIX: Scale door sound timer with DELTA_TIME for 60fps
+    field_0x3478 += 1.0f * DELTA_TIME;
     if (field_0x3478 > 100.0f) {
         field_0x3478 = 100.0f;
     }

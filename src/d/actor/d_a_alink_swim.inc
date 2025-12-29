@@ -204,7 +204,7 @@ void daAlink_c::setSpeedAndAngleSwim() {
             }
         } else if (!checkNoResetFlg0(FLG0_SWIM_UP)) {
             setDoStatus(0x97);
-        } else if (mProcID == PROC_SWIM_MOVE && checkUnderMove0BckNoArc(ANM_SWIM_A) && field_0x30d0 == 0 && field_0x30d2 == 0) {
+        } else if (mProcID == PROC_SWIM_MOVE && checkUnderMove0BckNoArc(ANM_SWIM_A) && mWolfDashDistTimer == 0 && mWolfDashTimer == 0) {
             setDoStatus(9);
         }
     }
@@ -319,7 +319,7 @@ void daAlink_c::setSpeedAndAngleSwim() {
 
 int daAlink_c::checkNextActionSwim() {
     if (checkSwimButtonMove() && getZoraSwim()) {
-        field_0x3000 = 30;
+        field_0x3000 = 30 * SCALE_TIME;
     }
 
     if ((checkZoraWearAbility() && !checkHeavyStateOn(1, 1)) || checkNoResetFlg0(FLG0_SWIM_UP)) {
@@ -343,7 +343,7 @@ int daAlink_c::checkNextActionSwim() {
             return procSwimDiveInit();
         }
 
-        field_0x3000 = 30;
+        field_0x3000 = 30 * SCALE_TIME;
         return procSwimMoveInit();
     }
 
@@ -451,7 +451,7 @@ int daAlink_c::checkSwimAction(int param_0) {
                     seStartOnlyReverb(Z2SE_AL_JUMP_DIVE_WATER);
 
                     if (checkZoraWearAbility()) {
-                        field_0x3000 = 30;
+                        field_0x3000 = 30 * SCALE_TIME;
                     }
                     return procSwimMoveInit();
                 }
@@ -705,7 +705,7 @@ void daAlink_c::setSwimMoveAnime() {
             var_r29 = ANM_SWIM_DASH;
         } else if (mNormalSpeed < 3.0f || checkHookshotAnime()) {
             var_r29 = ANM_SWIM_WAIT;
-            field_0x30d0 = 0;
+            mWolfDashDistTimer = 0;
         } else {
             var_r29 = ANM_SWIM_A;
         }
@@ -755,7 +755,7 @@ void daAlink_c::setSwimMoveAnime() {
     field_0x347c -= field_0x3478;
 
     if (field_0x2f98 != 0) {
-        field_0x30d0 = 0;
+        mWolfDashDistTimer = 0;
     }
 
     if (checkBootsOrArmorHeavy()) {
@@ -774,7 +774,7 @@ void daAlink_c::setSwimMoveAnime() {
         field_0x3198 = var_r29;
 
         if (checkUnderMove0BckNoArc(ANM_SWIM_DASH)) {
-            field_0x30d2 = mpHIO->mSwim.m.field_0x5e;
+            mWolfDashTimer = mpHIO->mSwim.m.field_0x5e * SCALE_TIME;
         }
 
         if (var_r29 == ANM_SWIM_WAIT) {
@@ -912,7 +912,7 @@ int daAlink_c::procSwimUpInit() {
 
     seStartMapInfo(Z2SE_AL_OUTOF_WATER);
     swimDeleteItem();
-    field_0x2fcd = 15;
+    field_0x2fcd = (u8)(15 * SCALE_TIME);
     return 1;
 }
 
@@ -973,7 +973,7 @@ int daAlink_c::procSwimWaitInit(int param_0) {
         setSingleAnimeBaseSpeed(ANM_SWIM_WAIT, mpHIO->mSwim.m.mWaitAnmSpeed, -1.0f);
     }
 
-    field_0x30d0 = 0;
+    mWolfDashDistTimer = 0;
     field_0x3198 = 0x14;
     field_0x32cc = mEquipItem;
 
@@ -1037,7 +1037,7 @@ int daAlink_c::procSwimWait() {
                (checkUpSwimButtonAccept() && doButton()))
     {
         if (checkUpSwimButtonAccept() && doButton()) {
-            field_0x3000 = 30;
+            field_0x3000 = 30 * SCALE_TIME;
         }
 
         procSwimMoveInit();
@@ -1093,7 +1093,7 @@ int daAlink_c::procSwimMove() {
     setSpeedAndAngleSwim();
 
     if (checkUpSwimButtonAccept() && doButton()) {
-        field_0x3000 = 30;
+        field_0x3000 = 30 * SCALE_TIME;
     }
 
     setSwimMoveAnime();
@@ -1115,7 +1115,7 @@ int daAlink_c::procSwimMove() {
         procSwimDiveInit();
     } else if (dComIfGp_getDoStatus() == 9 && doTrigger()) {
         onNoResetFlg1(FLG1_DASH_MODE);
-        field_0x30d0 = mpHIO->mSwim.m.field_0x5c;
+        mWolfDashDistTimer = mpHIO->mSwim.m.field_0x5c * SCALE_TIME;
         setSingleAnimeParam(ANM_SWIM_DASH, &mpHIO->mSwim.m.mDashAnm);
         field_0x3198 = ANM_SWIM_DASH;
     } else if (!checkZoraSwimMove() && (!checkUpSwimButtonAccept() || !doButton()) &&
@@ -1147,7 +1147,7 @@ int daAlink_c::procSwimDiveInit() {
     mProcVar4.field_0x3010 = 0;
 
     dComIfGp_setPlayerStatus0(0, 0x100000);
-    field_0x3000 = 30;
+    field_0x3000 = 30 * SCALE_TIME;
     field_0x3478 = 0.0f;
     field_0x347c = 1.0f / mpHIO->mSwim.m.mUnderwaterDiveAnm.mEndFrame;
     return 1;
@@ -1165,7 +1165,7 @@ int daAlink_c::procSwimDive() {
     }
 
     field_0x2f99 = 7;
-    field_0x3000 = 30;
+    field_0x3000 = 30 * SCALE_TIME;
     setNormalSpeedF(0.0f, mpHIO->mSwim.m.mDeceleration);
 
     field_0x3478 = field_0x347c * frame_ctrl->getFrame();
@@ -1230,7 +1230,7 @@ int daAlink_c::procSwimHookshotSubjectInit() {
 
     field_0x3480 = mpHIO->mSwim.m.mStartHeight;
     mProcVar4.field_0x3010 = 0;
-    field_0x30d0 = 0;
+    mWolfDashDistTimer = 0;
 
     setHookshotReadyMaterial();
     dComIfGp_setPlayerStatus0(0, 0x104000);
@@ -1306,7 +1306,7 @@ int daAlink_c::procSwimHookshotMoveInit() {
 
     field_0x3480 = mpHIO->mSwim.m.mStartHeight;
     mProcVar4.field_0x3010 = 0;
-    field_0x30d0 = 0;
+    mWolfDashDistTimer = 0;
 
     dComIfGp_setPlayerStatus0(0, 0x104000);
     return 1;
@@ -1333,7 +1333,7 @@ int daAlink_c::procSwimHookshotMove() {
     }
 
     if (checkUpSwimButtonAccept() && doTrigger()) {
-        field_0x3000 = 30;
+        field_0x3000 = 30 * SCALE_TIME;
         return procSwimMoveInit();
     }
 

@@ -60,8 +60,8 @@ daE_BI_HIO_c::daE_BI_HIO_c() {
     basic_size = 1.0f;
     search_range = 400.0f;
     track_range = 600.0f;
-    time_to_get_going = 30;
-    movement_spd = 10.0f;
+    time_to_get_going = 30 * SCALE_TIME;
+    movement_spd = 10.0f * DELTA_TIME;
 }
 
 static void anm_init(e_bi_class* i_this, int i_index, f32 i_morf, u8 i_attr, f32 i_rate) {
@@ -134,7 +134,7 @@ static void damage_check(e_bi_class* i_this) {
         if (i_this->at_sph.ChkAtShieldHit()) {
             i_this->action = 5;
             i_this->mode = 0;
-            i_this->damage_time = 60;
+            i_this->damage_time = 60 * SCALE_TIME;
             actor->speedF = 0.0f;
             i_this->field_0x6a6 = i_this->target_angle + 0x8000;
         } else if (i_this->cc_cyl.ChkTgHit()) {
@@ -168,7 +168,7 @@ static void damage_check(e_bi_class* i_this) {
             } else {
                 i_this->action = 5;
                 i_this->mode = 0;
-                i_this->damage_time = 60;
+                i_this->damage_time = 60 * SCALE_TIME;
                 actor->speedF = 0.0f;
 
                 if (i_this->at_info.mHitType == HIT_TYPE_STUN) {
@@ -306,7 +306,7 @@ static void e_bi_move(e_bi_class* i_this) {
 
             if (i_this->anm_p->isStop()) {
                 i_this->mode = 0;
-                i_this->timer[0] = cM_rndF(20.0f);
+                i_this->timer[0] = cM_rndF(20.0f) * SCALE_TIME;
                 anm_init(i_this, BCK_BI_WAIT02, 3.0f, J3DFrameCtrl::EMode_LOOP, 1.0f);
             }
             break;
@@ -316,7 +316,7 @@ static void e_bi_move(e_bi_class* i_this) {
             i_this->target = cM_atan2s(mae.x, mae.z);
             mae.y = 0.0f;
 
-            if (i_this->ignition_time == 0 && mae.abs() < l_HIO.movement_spd * 1.5f) {
+            if (i_this->ignition_time == 0 && mae.abs() < l_HIO.movement_spd * (1.5f * DELTA_TIME)) {
                 i_this->action = 0;
                 anm_init(i_this, BCK_BI_WAIT02, 2.0f, J3DFrameCtrl::EMode_LOOP, 1.0f);
                 i_this->mode = 2;
@@ -340,20 +340,20 @@ static void e_bi_ex(e_bi_class* i_this) {
     switch (i_this->mode) {
         case 0:
             i_this->mode = 1;
-            i_this->ignition_time = 160;
+            i_this->ignition_time = 160 * SCALE_TIME;
             anm_init(i_this, BCK_BI_BOMBPOSE, 10.0f, J3DFrameCtrl::EMode_NONE, 1.0f);
             f32 rnd;
             rnd = cM_rndF(0.2f) + 0.9f;
             i_this->field_0x6a2 = 0;
             i_this->field_0x6a4 = (3800.0f + JREG_F(5)) * rnd;
             i_this->field_0x6a8 = rnd * 20.0f;
-            actor->speed.y = 23.0f;
+            actor->speed.y = 23.0f * DELTA_TIME;
             break;
 
         case 1:
             if (i_this->ObjAcch.ChkGroundHit()) {
                 i_this->mode = 2;
-                actor->speed.y = 10.0f;
+                actor->speed.y = 10.0f * DELTA_TIME;
             }
             // fallthrough
         case 2:
@@ -375,10 +375,10 @@ static void e_bi_ex(e_bi_class* i_this) {
         i_this->sound.startCreatureSoundLevel(Z2SE_OBJ_BOMB_IGNITION, 0, -1);
         i_this->field_0x696 += (s16) 0x1100;
 
-        if (i_this->ignition_time < 45) {
+        if (i_this->ignition_time < 45 * SCALE_TIME) {
             i_this->field_0x696 += (s16) 0x1100;
 
-            if (i_this->ignition_time < 30) {
+            if (i_this->ignition_time < 30 * SCALE_TIME) {
                 i_this->field_0x696 += (s16) 0x1100;
             }
         }
@@ -422,17 +422,17 @@ static void e_bi_water(e_bi_class* i_this) {
         case 0:
             anm_init(i_this, BCK_BI_MOVE, 3.0f, J3DFrameCtrl::EMode_LOOP, 3.0f);
             i_this->mode = 1;
-            i_this->timer[0] = 20;
+            i_this->timer[0] = 20 * SCALE_TIME;
             actor->speed.y = 0.0f;
             // fallthrough
         case 1:
             if (i_this->timer[0] == 0) {
                 i_this->anm_p->setPlaySpeed(0.0f);
                 actor->current.pos.y += actor->speed.y;
-                actor->speed.y -= 0.1f;
+                actor->speed.y -= 0.1f * DELTA_TIME;
 
-                if (actor->speed.y < -2.0f) {
-                    actor->speed.y = -2.0f;
+                if (actor->speed.y < -2.0f * DELTA_TIME) {
+                    actor->speed.y = -2.0f * DELTA_TIME;
                 }
 
                 cLib_addCalc0(&actor->scale.x, 1.0f, 0.02f);
@@ -449,8 +449,8 @@ static void e_bi_water(e_bi_class* i_this) {
     actor->current.pos.z += actor->speed.z;
 
     i_this->ObjAcch.CrrPos(dComIfG_Bgsp());
-    actor->speed.x *= 0.9f;
-    actor->speed.z *= 0.9f;
+    actor->speed.x *= 0.9f * DELTA_TIME;
+    actor->speed.z *= 0.9f * DELTA_TIME;
 
     cXyz pos(actor->current.pos);
     pos.y = i_this->water_offset;
@@ -466,14 +466,14 @@ static void e_bi_disap(e_bi_class* i_this) {
     switch (i_this->mode) {
         case 0:
             anm_init(i_this, BCK_BI_APPEAR, 10.0f, J3DFrameCtrl::EMode_NONE, 0.0f);
-            i_this->disap_time = 40.0f;
+            i_this->disap_time = 40.0f * DELTA_TIME;
             i_this->mode = 1;
-            i_this->timer[0] = 10;
+            i_this->timer[0] = 10 * SCALE_TIME;
             break;
 
         case 1:
             if (i_this->timer[0] == 0) {
-                i_this->disap_time -= 1.0f;
+                i_this->disap_time -= 1.0f * DELTA_TIME;
 
                 if (i_this->disap_time < 0.0f) {
                     fopAcM_delete(actor);
@@ -587,7 +587,7 @@ static void action(e_bi_class* i_this) {
         actor->speed.x = ato.x;
         actor->speed.z = ato.z;
         actor->current.pos += actor->speed;
-        actor->speed.y -= 5.0f;
+        actor->speed.y -= 5.0f * DELTA_TIME;
         i_this->ObjAcch.CrrPos(dComIfG_Bgsp());
     }
 
@@ -621,7 +621,7 @@ static void action(e_bi_class* i_this) {
     }
 
     if (bVar4 != 0 && water_check(i_this)) {
-        i_this->action = 6;
+        i_this->action = ACTION_WATER;
         i_this->mode = 0;
         actor->current.pos.y = i_this->water_offset - (WREG_F(11) + 50.0f);
         cXyz pos(actor->current.pos);

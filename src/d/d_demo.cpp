@@ -851,7 +851,7 @@ void dDemo_c::create() {
     m_object = new dDemo_object_c();
     JUT_ASSERT(0, m_object != NULL);
 
-    m_control->setSecondPerFrame(1.0f / 30.0f);
+    m_control->setSecondPerFrame((1.0f / 30.0f) * DELTA_TIME);
     m_control->setFactory(m_factory);
     m_factory->appendCreateObject(m_stage);
     m_factory->appendCreateObject(m_audio);

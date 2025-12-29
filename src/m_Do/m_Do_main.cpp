@@ -4,6 +4,7 @@
  */
 
 #include "m_Do/m_Do_main.h"
+#include "global.h"  // Boofener: For deltatime system
 #include "DynamicLink.h"
 #include "JSystem/JAudio2/JASAudioThread.h"
 #include "JSystem/JAudio2/JAUSoundTable.h"
@@ -38,6 +39,123 @@
 #if PLATFORM_WII || PLATFORM_SHIELD
 #include <revolution/sc.h>
 #endif
+
+// Boofener: Frame pacing + real DELTA_TIME (30fps-normalized).
+//
+// What this replaces (older experiments):
+// - DELTA_TIME was derived from the *selected* framerate (30/fps), not the *actual* frame time.
+//   That meant if you selected 60fps but the game only managed ~30fps, DELTA_TIME stayed ~0.5
+//   and the entire game ran in slow-motion until you switched to 30fps mode.
+// - There was also a "skip logic updates on some frames" approach for high FPS. That can make
+//   the game feel inconsistent and complicates timing: when logic doesn't run, you either
+//   accumulate time elsewhere or you effectively drop simulation time.
+//
+// Current approach:
+// - Always execute game logic every frame.
+// - Compute DELTA_TIME from real elapsed time each frame:
+//     DELTA_TIME = (real_seconds_elapsed) * 30
+//   So at 60fps, it's ~0.5; at 30fps, it's ~1.0; if performance dips, DELTA_TIME rises and
+//   movement/physics remain real-time (no slow-mo).
+// - Keep SCALE_TIME as the legacy integer multiplier based on the *selected* mode (30->1, 60->2)
+//   so existing timer/counter scaling continues to behave like before.
+float g_deltaTime = 0.5f;
+int g_scaleTime = 2;
+float g_targetFrameTime = 1.0f / 30.0f;
+float g_targetFramerate = 60.0f;
+float g_selectedFramerate = 60.0f;
+int g_staleMode = 0;
+static OSTime s_lastFrameTime = 0;
+static int s_initialized = 0;
+
+void setTargetFramerate(float fps) {
+    g_targetFramerate = fps;
+    // Keep SCALE_TIME as the legacy "30fps frame multiplier" for existing timer scaling.
+    // DELTA_TIME is now computed from real frame time in updateDeltaTime().
+    g_scaleTime = (int)(fps / 30.0f);
+    if (g_scaleTime < 1) {
+        g_scaleTime = 1;
+    }
+}
+
+float getTargetFramerate() {
+    return g_targetFramerate;
+}
+
+void setSelectedFramerate(float fps) {
+    g_selectedFramerate = fps;
+}
+
+float getSelectedFramerate() {
+    return g_selectedFramerate;
+}
+
+void setStaleMode(int enabled) {
+    g_staleMode = enabled;
+}
+
+int getStaleMode() {
+    return g_staleMode;
+}
+
+int shouldUpdateGameLogic() {
+    // Legacy hook: older builds skipped logic on some frames for high-FPS rendering.
+    // With a real DELTA_TIME and a 30/60fps frame limiter, always execute logic every frame.
+    return 1;
+}
+
+void updateDeltaTime() {
+    const OSTime currentTime = OSGetTime();
+
+    if (!s_initialized) {
+        s_lastFrameTime = currentTime;
+        s_initialized = true;
+        // Initialize to the selected target (30fps => 1.0, 60fps => 0.5).
+        g_deltaTime = (g_targetFramerate > 0.0f) ? (30.0f / g_targetFramerate) : 1.0f;
+        return;
+    }
+
+    OSTime deltaTicks = currentTime - s_lastFrameTime;
+    s_lastFrameTime = currentTime;
+
+    // Convert real elapsed time into "30fps frames" (30fps => 1.0, 60fps => 0.5).
+    // This is intentionally independent of the selected mode: if the game runs slower than
+    // the selected target, DELTA_TIME grows and we don't enter slow-motion.
+    const u32 ticksPerSecond = (u32)OSSecondsToTicks(1);
+    if (ticksPerSecond == 0) {
+        g_deltaTime = 1.0f;
+        return;
+    }
+
+    if (deltaTicks < 0) {
+        deltaTicks = 0;
+    }
+
+    float deltaSeconds = (float)deltaTicks / (float)ticksPerSecond;
+    float deltaTime30fps = deltaSeconds * 30.0f;
+
+    // Clamp to avoid extreme physics jumps on hitches/pauses.
+    // (This is not a "fixed timestep" accumulator; it's just a sanity clamp.)
+    if (deltaTime30fps < 0.0f) {
+        deltaTime30fps = 0.0f;
+    } else if (deltaTime30fps > 4.0f) {
+        deltaTime30fps = 4.0f;
+    }
+
+    g_deltaTime = deltaTime30fps;
+
+    // Stale mode: freeze all delta-time based animations
+    if (g_staleMode) {
+        g_deltaTime = 0.0f;
+    }
+
+    // Keep SCALE_TIME aligned with the *selected* mode to preserve existing timer scaling behavior.
+    // In 60fps mode, timers are typically initialized with `frames * SCALE_TIME` and decremented by 1
+    // per frame, so they remain approximately real-time at the intended target.
+    g_scaleTime = (int)(g_targetFramerate / 30.0f);
+    if (g_scaleTime < 1) {
+        g_scaleTime = 1;
+    }
+}
 
 class mDoMain_HIO_c : public mDoHIO_entry_c {
 public:
@@ -170,7 +288,7 @@ void HeapCheck::heapDisplay() const {
 int mDoMain::argument = -1;
 #endif
 
-s8 mDoMain::developmentMode = -1;
+s8 mDoMain::developmentMode = DEVELOPMENT_MODE;
 
 #if DEBUG
 u32 mDoMain::gameHeapSize = 0xFFFFFFFF;
@@ -728,6 +846,9 @@ void main01(void) {
     do {
         static u32 frame;
         frame++;
+
+        // Boofener: Update deltatime for frame-independent physics (60/120/144fps support)
+        updateDeltaTime();
 
         #if DEBUG
         if (memorycheck_check_frame != 0 && frame % memorycheck_check_frame == 0) {

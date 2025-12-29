@@ -1,6 +1,7 @@
 #include "d/dolzel.h" // IWYU pragma: keep
 
 #include "d/d_camera.h"
+#include "global.h"  // Boofener: For DELTA_TIME scaling
 #include "SSystem/SComponent/c_counter.h"
 #include "SSystem/SComponent/c_math.h"
 #include <math.h>
@@ -3353,9 +3354,9 @@ bool dCamera_c::chaseCamera(s32 param_0) {
         } else {
             tmp = 45.0f;
         }
-        chase->field_0x38 += (tmp - chase->field_0x38) * 0.04f;
+        chase->field_0x38 += (tmp - chase->field_0x38) * 0.04f * DELTA_TIME;  // Boofener: Scale for 60fps
     } else {
-        chase->field_0x38 += (val0 - chase->field_0x38) * 0.06f;
+        chase->field_0x38 += (val0 - chase->field_0x38) * 0.06f * DELTA_TIME;  // Boofener: Scale for 60fps
     }
 
     if (mGear == 1 || val7 <= val8) {
@@ -3374,7 +3375,7 @@ bool dCamera_c::chaseCamera(s32 param_0) {
         if (mCurCamStyleTimer == 0) {
             chase->field_0xa4 = tmp;
         } else {
-            chase->field_0xa4 += (tmp - chase->field_0xa4) * 0.75f;
+            chase->field_0xa4 += (tmp - chase->field_0xa4) * 0.75f * DELTA_TIME;  // Boofener: Scale for 60fps
         }
     }
 
@@ -3382,7 +3383,7 @@ bool dCamera_c::chaseCamera(s32 param_0) {
     if (mCurCamStyleTimer == 0) {
         chase->field_0x3c = tmp;
     } else {
-        chase->field_0x3c += (tmp - chase->field_0x3c) * 0.08f;
+        chase->field_0x3c += (tmp - chase->field_0x3c) * 0.08f * DELTA_TIME;  // Boofener: Scale for 60fps
     }
 
     cXyz vec(chase->field_0x38, chase->field_0x3c, val1);
@@ -3568,7 +3569,7 @@ bool dCamera_c::chaseCamera(s32 param_0) {
                 mStyleSettle.mFinished = true;
             }
         }
-        mViewCache.mCenter += (pos - mViewCache.mCenter) * rate;
+        mViewCache.mCenter += (pos - mViewCache.mCenter) * rate * DELTA_TIME;  // Boofener: Scale interpolation rate
 
         f32 dist = dCamMath::xyzHorizontalDistance(pos, chase->field_0x58);
         if (dist < std::fabsf(vec.x > vec.z ? vec.x : vec.z) + 20.0f) {
@@ -3590,10 +3591,10 @@ bool dCamera_c::chaseCamera(s32 param_0) {
         }
         chase->field_0x50 = ang.Degree();
         cSGlobe globe(dVar43, ang, cSAngle(mControlledYaw.Inv()));
-        mViewCache.mDirection.R(mViewCache.mDirection.R() + (globe.R() - mViewCache.mDirection.R()) * rate);
-        mViewCache.mDirection.V(mViewCache.mDirection.V() + (globe.V() - mViewCache.mDirection.V()) * rate);
+        mViewCache.mDirection.R(mViewCache.mDirection.R() + (globe.R() - mViewCache.mDirection.R()) * rate * DELTA_TIME);  // Boofener: Scale interpolation rate
+        mViewCache.mDirection.V(mViewCache.mDirection.V() + (globe.V() - mViewCache.mDirection.V()) * rate * DELTA_TIME);  // Boofener: Scale interpolation rate
         if (chkFlag(0x100000) || bVar3 || bVar6) {
-            mViewCache.mDirection.U(mViewCache.mDirection.U() + (chase->field_0x96 - mViewCache.mDirection.U()) * rate);
+            mViewCache.mDirection.U(mViewCache.mDirection.U() + (chase->field_0x96 - mViewCache.mDirection.U()) * rate * DELTA_TIME);  // Boofener: Scale interpolation rate
         }
         chase->field_0x64 = mViewCache.mCenter + mViewCache.mDirection.Xyz();
         mViewCache.mEye = chase->field_0x64;
@@ -3654,7 +3655,7 @@ bool dCamera_c::chaseCamera(s32 param_0) {
             bVar11 = false;
         }
         val10 = 0.01f;
-        chase->field_0x20 += (1.0f - chase->field_0x20) * 0.1f;
+        chase->field_0x20 += (1.0f - chase->field_0x20) * 0.1f * DELTA_TIME;  // Boofener: Scale for 60fps
     }
 
     if (check_owner_action(mPadID, 0x2800008)) {
@@ -3676,7 +3677,7 @@ bool dCamera_c::chaseCamera(s32 param_0) {
     {
         chase->field_0x84 = 0.1f;
     } else {
-        chase->field_0x84 += (val6 - chase->field_0x84) * 0.4f;
+        chase->field_0x84 += (val6 - chase->field_0x84) * 0.4f * DELTA_TIME;  // Boofener: Scale for 60fps
     }
 
     if (chase->field_0x91) {
@@ -3691,9 +3692,9 @@ bool dCamera_c::chaseCamera(s32 param_0) {
     } else if (bVar6 && mDoCPd_c::getTrigA(mPadID)) {
         chase->field_0x88 = 0.01f;
     } else if (bVar6) {
-        chase->field_0x88 += (val5 - chase->field_0x88) * 0.1f;
+        chase->field_0x88 += (val5 - chase->field_0x88) * 0.1f * DELTA_TIME;  // Boofener: Scale for 60fps
     } else {
-        chase->field_0x88 += (val5 - chase->field_0x88) * 0.4f;
+        chase->field_0x88 += (val5 - chase->field_0x88) * 0.4f * DELTA_TIME;  // Boofener: Scale for 60fps
     }
 
     cXyz vec4(chase->field_0x84, chase->field_0x88, chase->field_0x84);
@@ -3739,12 +3740,12 @@ bool dCamera_c::chaseCamera(s32 param_0) {
             }
         }
 
-        chase->field_0x40 += (fVar55 - chase->field_0x40) * 0.01f;
+        chase->field_0x40 += (fVar55 - chase->field_0x40) * 0.01f * DELTA_TIME;  // Boofener: Scale for 60fps
         cSGlobe globe(chase->field_0x40, mViewCache.mDirection.V(), mViewCache.mDirection.U() + cSAngle::_270);
         pos += globe.Xyz();
     }
 
-    mViewCache.mCenter += (pos - mViewCache.mCenter) * vec4;
+    mViewCache.mCenter += (pos - mViewCache.mCenter) * vec4 * DELTA_TIME;  // Boofener: Scale for 60fps
     cSGlobe globe = mViewCache.mEye - mViewCache.mCenter;
 
     if (chase->field_0x1a > 0 && chase->field_0x1a <= 14) {
@@ -3762,12 +3763,12 @@ bool dCamera_c::chaseCamera(s32 param_0) {
             target = 1.0f - ((1.0f - val24) + val24 * cSAngle(tmp * 180.0f).Cos());
             target *= mPadInfo.mMainStick.mLastValue;
         }
-        chase->field_0x24 += (target - chase->field_0x24) * 0.4f;
+        chase->field_0x24 += (target - chase->field_0x24) * 0.4f * DELTA_TIME;  // Boofener: Scale for 60fps
         if (chase->field_0x70) {
             chase->field_0x48 = 0.05f;
         }
         chase->field_0x70 = false;
-        chase->field_0x48 += (val24 * chase->field_0x24 - chase->field_0x48) * 0.2f;
+        chase->field_0x48 += (val24 * chase->field_0x24 - chase->field_0x48) * 0.2f * DELTA_TIME;  // Boofener: Scale for 60fps
     } else if (chkFlag(0x100000) || bVar3) {
         if (chase->field_0x70) {
             chase->field_0x48 = 0.05f;
@@ -3839,12 +3840,18 @@ bool dCamera_c::chaseCamera(s32 param_0) {
     }
 
     f32 last_pos_x = mPadInfo.mCStick.mLastPosX;
+
+    // Boofener: Apply horizontal camera inversion if enabled
+    if (dComIfGs_getOptCameraHInvert()) {
+        last_pos_x = -last_pos_x;
+    }
+
     std::fabsf(last_pos_x);
     std::fabsf(mPadInfo.mCStick.mLastPosY);
     chase->field_0x93 = false;
 
     if (!mCamParam.Flag(param_0, 0x40) && std::fabsf(last_pos_x) > 0.05f) {
-        chase->field_0xac += (dCamMath::rationalBezierRatio(last_pos_x, 0.5f) * 8.0f - chase->field_0xac) * chase->field_0x4c;
+        chase->field_0xac += (dCamMath::rationalBezierRatio(last_pos_x, 0.5f) * 8.0f - chase->field_0xac) * chase->field_0x4c * DELTA_TIME;  // Boofener: Scale for 60fps
         ang3 = globe.U() + cSAngle(chase->field_0xac);
         dVar39 = std::fabsf(last_pos_x) - 0.05f;
         if (mCamSetup.CheckFlag(0x1000) && mFakeAngleSys.field_0x0 == 0) {
@@ -9598,7 +9605,8 @@ void dCamera_c::SetBlureActor(fopAc_ac_c* i_actor) {
 }
 
 int dCamera_c::blureCamera() {
-    if (mBlure.field_0x4 > 0) {
+    return 0;
+    /*if (mBlure.field_0x4 > 0) {
         if (mBlure.mpActor != NULL) {
             dDlst_window_c* window = get_window(field_0x0);
             scissor_class* scissor = window->getScissor();
@@ -9634,7 +9642,7 @@ int dCamera_c::blureCamera() {
         mBlure.field_0x4 = 0;
     }
 
-    return mBlure.field_0x4;
+    return mBlure.field_0x4; */
 }
 
 void dCamera_c::onHorseDush() {

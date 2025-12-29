@@ -138,8 +138,8 @@ void daAlink_c::changeCommon() {
         clearFirePointDamageEffect(i);
     }
 
-    field_0x30d0 = 0;
-    field_0x30d2 = 0;
+    mWolfDashDistTimer = 0;
+    mWolfDashTimer = 0;
     field_0x2fc3 = 10;
 }
 
@@ -535,14 +535,14 @@ void daAlink_c::onWolfEyeUp() {
     if (mWolfEyeUp == 0) {
         mZ2Link.setWolfEyeOpen(true);
         mWolfEyeUp = mpHIO->mWolf.m.mSensesLingerTime;
-        field_0x2fd2 = 20;
+        field_0x2fd2 = (u8)(20 * SCALE_TIME);
     }
 }
 
 void daAlink_c::offWolfEyeUp() {
     if (mWolfEyeUp != 0) {
         mWolfEyeUp = 0;
-        field_0x2fd2 = 20;
+        field_0x2fd2 = (u8)(20 * SCALE_TIME);
         mZ2Link.setWolfEyeOpen(false);
     }
 }
@@ -885,9 +885,9 @@ void daAlink_c::setBlendWolfMoveAnime(f32 param_0) {
         field_0x2fc1 = 0;
 
         if ((temp_f30 < sp20 || checkAttentionState() || checkHeavyStateOn(1, 1)) &&
-            field_0x30d0 != 0)
+            mWolfDashDistTimer != 0)
         {
-            field_0x30d0 = 0;
+            mWolfDashDistTimer = 0;
             offNoResetFlg1(FLG1_DASH_MODE);
         }
 
@@ -2556,7 +2556,7 @@ int daAlink_c::procWolfDashInit() {
     mProcVar3.field_0x300e = 0;
 
     if (checkWolfSlowDash()) {
-        field_0x30d0 = mpHIO->mWolf.mWlMove.m.mADashDurationSlow;
+        mWolfDashDistTimer = mpHIO->mWolf.mWlMove.m.mADashDurationSlow * SCALE_TIME;
         field_0x594 = mpHIO->mWolf.mWlMove.m.mADashMaxSpeedSlow;
 
         if (mNormalSpeed < mpHIO->mWolf.mWlMove.m.mADashInitSpeedSlow) {
@@ -2570,7 +2570,7 @@ int daAlink_c::procWolfDashInit() {
             mNormalSpeed = mpHIO->mWolf.mWlMove.m.mADashInitSpeedSlow2;
         }
     } else {
-        field_0x30d0 = mpHIO->mWolf.mWlMove.m.mADashDuration;
+        mWolfDashDistTimer = mpHIO->mWolf.mWlMove.m.mADashDuration * SCALE_TIME;
         field_0x594 = mpHIO->mWolf.mWlMove.m.mADashMaxSpeed;
 
         if (mNormalSpeed < mpHIO->mWolf.mWlMove.m.mADashInitSpeed) {
@@ -2619,11 +2619,11 @@ int daAlink_c::procWolfDash() {
         }
 
         if (checkWolfSlowDash()) {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow * SCALE_TIME;
         } else if (field_0x2fc7 == 2) {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow2;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow2 * SCALE_TIME;
         } else {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTime;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTime * SCALE_TIME;
         }
 
         return checkNextActionWolf(0);
@@ -2633,11 +2633,11 @@ int daAlink_c::procWolfDash() {
         }
 
         if (checkWolfSlowDash()) {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow * SCALE_TIME;
         } else if (field_0x2fc7 == 2) {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow2;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow2 * SCALE_TIME;
         } else {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTime;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTime * SCALE_TIME;
         }
 
         checkNextActionWolf(1);
@@ -2912,7 +2912,7 @@ int daAlink_c::procWolfSideStepLandInit(s16 param_0) {
     if (field_0x2f98 == 1) {
         setSingleAnimeWolfParam(WANM_BACK_JUMP_END, &mpHIO->mWolf.mWlSideStep.m.mBackLandAnm);
         field_0x3478 = mpHIO->mWolf.mWlSideStep.m.mBackLandAnm.mCancelFrame;
-        field_0x2fcc = 10;
+        field_0x2fcc = (u8)(10 * SCALE_TIME);
     } else {
         field_0x2fcc = 0;
         setSingleAnimeWolfParam(
@@ -2938,7 +2938,7 @@ int daAlink_c::procWolfSideStepLand() {
     daPy_frameCtrl_c* frameCtrl = mUnderFrameCtrl;
 
     if (field_0x2fcc != 0) {
-        field_0x2fcc = 10;
+        field_0x2fcc = (u8)(10 * SCALE_TIME);
     }
 
     setWolfAtnMoveDirection();
@@ -3028,7 +3028,7 @@ int daAlink_c::procWolfBackJumpLandInit(s16 param_0, s16 param_1) {
     mNormalSpeed = 0.0f;
     field_0x2f9d = 4;
     setFootEffectProcType(2);
-    field_0x2fcc = 10;
+    field_0x2fcc = (u8)(10 * SCALE_TIME);
     mProcVar5.field_0x3012 = param_0;
     mProcVar4.field_0x3010 = param_1;
     setStepLandVibration();
@@ -3040,7 +3040,7 @@ int daAlink_c::procWolfBackJumpLand() {
     daPy_frameCtrl_c* frameCtrl = mUnderFrameCtrl;
 
     if (field_0x2fcc != 0) {
-        field_0x2fcc = 10;
+        field_0x2fcc = (u8)(10 * SCALE_TIME);
     }
 
     setWolfAtnMoveDirection();
@@ -6447,6 +6447,8 @@ f32 daAlink_c::getWolfSwimMoveAnmSpeed() {
             anm_speed * (mpHIO->mWolf.mWlSwim.m.mMoveMaxAnmSpeedWeak - mpHIO->mWolf.mWlSwim.m.mMoveMinAnmSpeedWeak);
     }
 
+    // Returned in "frames per 30fps tick" units; callers that directly update frameCtrl rates
+    // should use setWaterInAnmRate() (which applies `DELTA_TIME`).
     return anm_speed;
 }
 
@@ -6463,7 +6465,7 @@ int daAlink_c::decideDoStatusSwimWolf() {
             fopAcM_setCarryNow(field_0x27f4, 0);
             onResetFlg0(RFLG0_UNK_8000);
         }
-    } else if (checkNoResetFlg0(FLG0_SWIM_UP) && field_0x30d2 == 0 && !checkWolfSwimDashAnime() &&
+    } else if (checkNoResetFlg0(FLG0_SWIM_UP) && mWolfDashTimer == 0 && !checkWolfSwimDashAnime() &&
                mProcID == PROC_WOLF_SWIM_MOVE)
     {
         setDoStatus(9);
@@ -6472,11 +6474,11 @@ int daAlink_c::decideDoStatusSwimWolf() {
             onNoResetFlg1(FLG1_DASH_MODE);
 
             if (field_0x2fc7 == 1 || field_0x2fc7 == 3) {
-                field_0x30d0 = mpHIO->mWolf.mWlMove.m.mADashDurationSlow;
+                mWolfDashDistTimer = mpHIO->mWolf.mWlMove.m.mADashDurationSlow * SCALE_TIME;
             } else if (field_0x2fc7 == 2) {
-                field_0x30d0 = mpHIO->mWolf.mWlMove.m.mADashDurationSlow2;
+                mWolfDashDistTimer = mpHIO->mWolf.mWlMove.m.mADashDurationSlow2 * SCALE_TIME;
             } else {
-                field_0x30d0 = mpHIO->mWolf.mWlMove.m.mADashDuration;
+                mWolfDashDistTimer = mpHIO->mWolf.mWlMove.m.mADashDuration * SCALE_TIME;
             }
 
             setSingleAnimeWolfParam(WANM_SWIM_DASH, &mpHIO->mWolf.mWlSwim.m.mDashAnm);
@@ -6571,9 +6573,9 @@ int daAlink_c::procWolfSwimWait() {
     setSwimUpDownOffset();
 
     if (checkWolfDashMode()) {
-        mUnderFrameCtrl[0].setRate(mpHIO->mWolf.mWlSwim.m.mIdleAnmSpeed);
+        setWaterInAnmRate(&mUnderFrameCtrl[0], mpHIO->mWolf.mWlSwim.m.mIdleAnmSpeed);
     } else {
-        mUnderFrameCtrl[0].setRate(mpHIO->mWolf.mWlSwim.m.mIdleAnmSpeedWeak);
+        setWaterInAnmRate(&mUnderFrameCtrl[0], mpHIO->mWolf.mWlSwim.m.mIdleAnmSpeedWeak);
     }
 
     if (checkSwimUpAction()) {
@@ -6609,7 +6611,7 @@ int daAlink_c::procWolfSwimMove() {
     setSpeedAndAngleSwimWolf();
 
     if (!checkWolfSwimDashAnime()) {
-        mUnderFrameCtrl[0].setRate(getWolfSwimMoveAnmSpeed());
+        setWaterInAnmRate(&mUnderFrameCtrl[0], getWolfSwimMoveAnmSpeed());
     }
 
     if (checkSwimUpAction()) {
@@ -6625,11 +6627,11 @@ int daAlink_c::procWolfSwimMove() {
                                     mpHIO->mWolf.mWlSwim.m.mMoveInterp);
 
         if (field_0x2fc7 == 1 || field_0x2fc7 == 3) {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow * SCALE_TIME;
         } else if (field_0x2fc7 == 2) {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow2;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTimeSlow2 * SCALE_TIME;
         } else {
-            field_0x30d2 = mpHIO->mWolf.mWlMove.m.mADashCooldownTime;
+            mWolfDashTimer = mpHIO->mWolf.mWlMove.m.mADashCooldownTime * SCALE_TIME;
         }
     }
 
@@ -7028,8 +7030,11 @@ int daAlink_c::procWolfRollAttackMoveInit() {
         onModeFlg(1);
     }
 
-    mProcVar0.field_0x3008 = mpHIO->mWolf.mWlAttack.m.mChargeTime;
-    mProcVar1.field_0x300a = mpHIO->mWolf.mWlAttack.mWlAtLock.m.mAutoActivationTime;
+    // Scale charge timers to real time at higher FPS
+    mProcVar0.field_0x3008 =
+        (s16)(mpHIO->mWolf.mWlAttack.m.mChargeTime * (1.0f / DELTA_TIME) + 0.5f);
+    mProcVar1.field_0x300a =
+        (s16)(mpHIO->mWolf.mWlAttack.mWlAtLock.m.mAutoActivationTime * (1.0f / DELTA_TIME) + 0.5f);
     mProcVar5.field_0x3012 = 30;
     field_0x3198 = 0;
     field_0x2fe4 = shape_angle.y;

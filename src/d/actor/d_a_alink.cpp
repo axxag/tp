@@ -2683,9 +2683,14 @@ cXyz* daAlink_c::getNeckAimPos(cXyz* param_0, int* param_1, int param_2) {
                     field_0x28fc = fpcM_ERROR_PROCESS_ID_e;
                 }
             } else if (checkEnemyGroup(sp14)) {
-                if (field_0x30f8 == -30) {
+                // `field_0x30f8`: frame-based cooldown used to occasionally "lock" a candidate target
+                // (`field_0x28fc`) while scanning enemies. The timer counts down from 0 to
+                // `-(30 * SCALE_TIME)`; once it reaches the sentinel, we allow a low-probability
+                // re-roll and hold the chosen target for a random duration.
+                if (field_0x30f8 == -(30 * SCALE_TIME)) {
                     if (cM_rnd() < 0.02f) {
-                        field_0x30f8 = 30.0f + cM_rndF(30.0f);
+                        field_0x30f8 =
+                            (s16)(((30.0f + cM_rndF(30.0f)) * SCALE_TIME) + 0.5f);  // frames
                         var_r29 = sp14;
                         field_0x28fc = fopAcM_GetID(sp14);
                     }
@@ -4049,7 +4054,7 @@ void daAlink_c::setSelectEquipItem(int param_0) {
             (temp != mSwordModel || checkNoResetFlg2(FLG2_STATUS_WINDOW_DRAW)))
         {
             if (temp != mSwordModel) {
-                mSwordChangeWaitTimer = 5;
+                mSwordChangeWaitTimer = 5 * SCALE_TIME;  // frames
             }
 
             if (checkWoodSwordEquip()) {
@@ -4297,7 +4302,7 @@ void daAlink_c::playerInit() {
     field_0x3108 = shape_angle.y;
 
     field_0x2f20.setOldPosP(&field_0x3624, &field_0x3630);
-    field_0x2fc3 = 10;
+    field_0x2fc3 = 10 * SCALE_TIME;  // magic armor rupee-drain tick (frames)
 
     field_0x2f5c.mPosition = current.pos;
     field_0x2f5c.mColor.r = 80;
@@ -4328,7 +4333,7 @@ int daAlink_c::setStartProcInit() {
     BOOL horse_start = checkHorseStart(last_mode, start_mode);
 
     setDamagePoint(getLastSceneDamage(), last_mode == 4, 0, 1);
-    mSwordUpTimer = getLastSceneSwordAtUpTime() * 2;
+    mSwordUpTimer = getLastSceneSwordAtUpTime() * 2 * SCALE_TIME;  // frames
 
     if (checkWolf()) {
         setFaceBasicAnime(ANM_WAIT);
@@ -4900,6 +4905,8 @@ void daAlink_c::setIceSlipSpeed() {
             sp58 *= 30.0f / var_f28;
         }
 
+        // FIX: Scale ice slip acceleration with DELTA_TIME but increase magnitude to maintain distance
+        // At 60fps, we apply the force twice as often, so we need to apply it at the full rate per frame
         field_0x35c4 += sp58 * var_f29;
         speed += sp58 * (1.0f - var_f29);
 
@@ -5395,7 +5402,8 @@ int daAlink_c::simpleAnmPlay(J3DAnmBase* i_anm) {
     }
 
     int ret = 0;
-    f32 frame = i_anm->getFrame() + 1.0f;
+    // 60fps: advance simple J3D anims in 30fps frame units (fixes sword-charge BTK/SFX timing).
+    f32 frame = i_anm->getFrame() + DELTA_TIME;
 
     if (frame >= i_anm->getFrameMax()) {
         if (i_anm->getAttribute() == 2) {
@@ -5782,13 +5790,26 @@ BOOL daAlink_c::checkNoCollisionCorret() {
 }
 
 void daAlink_c::decSwordBlur() {
-    if (m_swordBlur.field_0x14 < 10) {
+    s16 blur_dec = (s16)(10.0f * DELTA_TIME + 0.5f);
+    if (blur_dec < 1) {
+        blur_dec = 1;
+    }
+
+    if (m_swordBlur.field_0x14 < blur_dec) {
         m_swordBlur.field_0x14 = 0;
     } else {
-        m_swordBlur.field_0x14 -= 10;
+        m_swordBlur.field_0x14 -= blur_dec;
         m_swordBlur.traceBlur(&current.pos, &old.pos, shape_angle.y - field_0x2fe6);
     }
-}
+}   /* lines 5786 - 5797 were originally:
+    void daAlink_c::decSwordBlur() {
+        if (m_swordBlur.field_0x14 < 10) {
+            m_swordBlur.field_0x14 = 0;
+        } else {
+            m_swordBlur.field_0x14 -= 10;
+            m_swordBlur.traceBlur(&current.pos, &old.pos, shape_angle.y - field_0x2fe6);
+        }
+    }*/
 
 void daAlink_c::resetWolfAtCollision() {
     if (checkNoResetFlg0(FLG0_UNK_40)) {
@@ -6623,7 +6644,7 @@ int daAlink_c::setDoubleAnime(f32 i_blendRate, f32 i_anmSpeedA, f32 i_anmSpeedB,
     commonDoubleAnime(under_bckA, upper_bckA, under_bckB, upper_bckB, i_blendRate, i_anmSpeedA,
                       i_anmSpeedB, param_5);
     if (i_morf >= 0.0f) {
-        field_0x2060->initOldFrameMorf(i_morf, 0, 35);
+        field_0x2060->initOldFrameMorf(i_morf / DELTA_TIME, 0, 35); // animation blending from roll to run 
     }
 
     setHandIndex(i_anmA);
@@ -7089,7 +7110,7 @@ void daAlink_c::setBlendMoveAnime(f32 param_0) {
         var_r29 = ANM_HORSE_WAIT_D_B;
     } else if ((!sp24 && ((sp1C != NULL && (checkEnemyGroup(sp1C) || checkGoatCatchActor(sp1C))) || field_0x311c != 0)) || checkEndResetFlg0(ERFLG0_BOSS_ROOM_WAIT) || checkBootsOrArmorHeavy()) {
         var_r29 = ANM_WAIT_B;
-        field_0x2fb3 = 0x2D;
+        field_0x2fb3 = 0x2D * SCALE_TIME;  // frames to hold WAIT_B (battle/attention idle)
     } else if (!sp24 && (field_0x2fb3 != 0 || checkNoResetFlg3(FLG3_UNK_2000) || field_0x35c4.absXZ() > 1.0f || (checkUnderMove0BckNoArc(ANM_WAIT_B) && !sp34->checkPass(0.0f)))) {
         var_r29 = ANM_WAIT_B;
     } else {
@@ -9017,10 +9038,10 @@ void daAlink_c::setStickData() {
 
     if (abs_v < 0x4000 && abs_v > 0x6D4 && field_0x3180 * angle_diff >= 0) {
         field_0x3180 += angle_diff;
-        mStickSpinTimer = 4;
+        mStickSpinTimer = 4 * SCALE_TIME;  // frames (stick-spin detection window)
     } else if (field_0x3180 * angle_diff < 0) {
         field_0x3180 = angle_diff;
-        mStickSpinTimer = 4;
+        mStickSpinTimer = 4 * SCALE_TIME;  // frames (stick-spin detection window)
     } else if (mStickSpinTimer > 0) {
         mStickSpinTimer--;
     } else {
@@ -9265,14 +9286,24 @@ bool daAlink_c::setShapeAngleToAtnActor(int param_0) {
 }
 
 void daAlink_c::initServiceWaitTime() {
-    field_0x30ca = cM_rndF(150.0f) + 300.0f;
+    f32 wait = cM_rndF(150.0f) + 300.0f;
 
     if (checkWolf()) {
-        field_0x30ca >>= 2;  // divide by 4
+        wait *= 0.25f;
     } else if (checkReinRide()) {
-        field_0x30ca *= 0.75f;
+        wait *= 0.75f;
     }
-}
+
+    field_0x30ca = (s16)((wait * SCALE_TIME) + 0.5f);  // frames until procServiceWaitInit()
+} /* lines 9283 - 9292 were originally:
+    void daAlink_c::initServiceWaitTime() {
+        field_0x30ca = cM_rndF(150.0f) + 300.0f;
+
+        if (checkWolf()) {
+            field_0x30ca >>= 2;  // divide by 4
+        } else if (checkReinRide()) {
+            field_0x30ca *= 0.75f;
+        }                                               */
 
 bool daAlink_c::checkZeroSpeedF() const {
     return fabsf(mNormalSpeed) < 0.0010000000474974513f;
@@ -9336,11 +9367,11 @@ void daAlink_c::setNormalSpeedF(f32 i_incSpeed, f32 param_1) {
                 acch_cir++;
             }
         } else if (fabsf(field_0x342c) > 1.0f || fabsf(field_0x3430) > 1.0f) {
-            field_0x30fc = 3;
+            field_0x30fc = 3 * SCALE_TIME;  // frames to keep `field_0x30fa` stable after wall contact
             field_0x30fa = cM_atan2s(field_0x342c, field_0x3430);
             var_r29 = (current.angle.y + 0x8000) - field_0x30fa;
         } else if (field_0x30fc == 1 && mGrabItemAcKeep.getActor() != NULL && current.pos.abs2(field_0x3540) < 1.0f && dComIfG_Bgsp().ChkPolySafe(mPolyInfo4)) {
-            field_0x30fc = 3;
+            field_0x30fc = 3 * SCALE_TIME;  // frames to keep `field_0x30fa` stable after wall contact
         }
 
         int temp_r3 = abs(var_r29);
@@ -9781,7 +9812,7 @@ void daAlink_c::decideCommonDoStatus() {
                     }
                 } else if (checkAttentionLock()) {
                     setDoStatus(0x8B);
-                } else if (field_0x30d2 == 0 &&
+                } else if (mWolfDashTimer == 0 &&
                            (field_0x33a8 > getFrontRollRate() || checkAttentionLock()))
                 {
                     setDoStatus(9);
@@ -10096,7 +10127,7 @@ void daAlink_c::setFallVoice() {
 void daAlink_c::setLandPassiveData() {
     if (field_0x30f0 == 0) {
         if (doTrigger()) {
-            field_0x30f0 = 65;
+            field_0x30f0 = 65 * SCALE_TIME;  // frames (post-land "passive" window)
         }
     } else {
         field_0x30f0--;
@@ -10134,7 +10165,7 @@ BOOL daAlink_c::checkLandAction(int param_0) {
     {
         if (param_0) {
             procLandDamageInit(0);
-        } else if (var_r29 && field_0x30f0 > 0x32) {
+        } else if (var_r29 && field_0x30f0 > (0x32 * SCALE_TIME)) {
             if (temp_r27 == DIR_FORWARD) {
                 procFrontRollInit();
             } else {
@@ -10192,7 +10223,7 @@ BOOL daAlink_c::checkSlideAction() {
             return procSlideInit(var_r29);
         }
     } else {
-        field_0x3090 = 8;
+        field_0x3090 = 8 * SCALE_TIME;  // frames (anti-retrigger grace period)
         return false;
     }
 }
@@ -10570,7 +10601,7 @@ int daAlink_c::checkItemChangeAutoAction() {
 
 void daAlink_c::setFastShotTimer() {
     if (!dComIfGp_checkPlayerStatus0(0, 0x2000)) {
-        mFastShotTime = mpHIO->mItem.m.mItemFPTransitionTimer;
+        mFastShotTime = (s16)(mpHIO->mItem.m.mItemFPTransitionTimer * SCALE_TIME);  // frames
     }
 }
 
@@ -10753,11 +10784,12 @@ BOOL daAlink_c::checkUpperItemAction() {
         field_0x30f6--;
 
         if (swordTrigger() || doTrigger()) {
-            field_0x30f6 -= mpHIO->mDamage.mDamCaught.m.mInputFadeTime;
+            // Reduce remaining escape time more aggressively when the player mashes inputs.
+            field_0x30f6 -= mpHIO->mDamage.mDamCaught.m.mInputFadeTime * SCALE_TIME;
         }
 
         if (checkInputOnR() && abs((s16)(mStickAngle - mPrevStickAngle)) > 0x1000) {
-            field_0x30f6 -= mpHIO->mDamage.mDamCaught.m.mInputFadeTime;
+            field_0x30f6 -= mpHIO->mDamage.mDamCaught.m.mInputFadeTime * SCALE_TIME;
         }
 
         if (field_0x30f6 < 0 || !checkNoResetFlg0(FLG0_DK_CAUGHT)) {
@@ -10805,7 +10837,7 @@ BOOL daAlink_c::checkUpperItemAction() {
 
 void daAlink_c::orderPeep() {
     mPeepExitID = ((kytag05_class*)field_0x27f4)->getSceneListID();
-    field_0x2ff2 = 20;
+    field_0x2ff2 = 20 * SCALE_TIME;  // frames (peep event transition delay)
     fopAcM_orderOtherEvent(this, field_0x27f4, l_peepEventName, 0xFFFF, 1, 0);
     if (checkWolf()) {
         procWolfWaitInit();
@@ -11536,6 +11568,20 @@ BOOL daAlink_c::checkItemChangeFromButton() {
 }
 
 BOOL daAlink_c::checkNextActionFromButton() {
+    // Boofener: Instant transform with D-pad down (respect shard/progression checks)
+    if (mDoCPd_c::getTrigDown(PAD_1)) {
+        if (!checkEventRun() && mProcID != PROC_METAMORPHOSE) {
+            // Only allow if the normal Midna transform would be permitted (needs Midna + shard/event bit)
+            daMidna_c* midna = (daMidna_c*)getMidnaActor();
+            bool can_transform = midna != NULL && midna->checkMetamorphoseEnable();
+            // Basic safety conditions
+            if (can_transform && mLinkAcch.ChkGroundHit() && !checkModeFlg(MODE_PLAYER_FLY) &&
+                !checkMagneBootsOn()) {
+                return procCoMetamorphoseInit();
+            }
+        }
+    }
+
     if (checkItemChangeAutoAction()) {
         return 1;
     }
@@ -12135,8 +12181,8 @@ void daAlink_c::setSpecialGravity(f32 i_gravity, f32 i_speed, int i_offFlag) {
         onNoResetFlg3(FLG3_UNK_4000);
     }
 
-    gravity = i_gravity;
-    maxFallSpeed = i_speed;
+    gravity = i_gravity * DELTA_TIME; // Boofener: applies delta time to gravity
+    maxFallSpeed = i_speed; // Boofener: applies delta time to max fall speed
 }
 
 void daAlink_c::transAnimeProc(cXyz* param_0, f32 param_1, f32 param_2) {
@@ -12486,16 +12532,22 @@ void daAlink_c::posMove() {
             Vec spFC = {0.0f, 0.0f, 0.0f};
             spFC.z = speedF;
             mDoMtx_stack_c::multVecSR(&spFC, &speed);
-            current.pos += speed;
-            current.pos.x += field_0x342c;
-            current.pos.z += field_0x3430;
+            // Ogathereal/Boofener: Movement scaled for 60fps
+            current.pos.x += speed.x * DELTA_TIME;
+            current.pos.y += speed.y * DELTA_TIME;
+            current.pos.z += speed.z * DELTA_TIME;
+            current.pos.x += field_0x342c * DELTA_TIME;
+            current.pos.z += field_0x3430 * DELTA_TIME;
         } else {
-            current.pos += speed;
-            current.pos.x += field_0x342c;
-            current.pos.z += field_0x3430;
+            // Ogathereal/Boofener: Movement scaled for 60fps
+            current.pos.x += speed.x * DELTA_TIME;
+            current.pos.y += speed.y * DELTA_TIME;
+            current.pos.z += speed.z * DELTA_TIME;
+            current.pos.x += field_0x342c * DELTA_TIME;
+            current.pos.z += field_0x3430 * DELTA_TIME;
 
             if (checkEndResetFlg1(ERFLG1_UNK_800) && checkStageName("F_SP113")) {
-                current.pos.y -= 50.0f;
+                current.pos.y -= 50.0f * DELTA_TIME; // Boofener: enter stage distance scaled for 60fps
             }
         }
     }
@@ -12529,10 +12581,12 @@ void daAlink_c::posMove() {
 
             if (mLinkAcch.ChkGroundHit() && dComIfG_Bgsp().ChkPolySafe(mLinkAcch.m_gnd)) {
                 s16 angle1 = getGroundAngle(&mLinkAcch.m_gnd, 0);
-                current.pos.z += field_0x35c4.z * cM_scos(angle1);
+                // FIX: Scale ice slip position update with DELTA_TIME for correct frame rate
+                current.pos.z += field_0x35c4.z * cM_scos(angle1) * DELTA_TIME;
 
                 s16 angle2 = getGroundAngle(&mLinkAcch.m_gnd, 0x4000);
-                current.pos.x += field_0x35c4.x * cM_scos(angle2);
+                // FIX: Scale ice slip position update with DELTA_TIME for correct frame rate
+                current.pos.x += field_0x35c4.x * cM_scos(angle2) * DELTA_TIME;
 
                 if (checkZeroSpeedF() && field_0x35c4.abs2() > 9.0f) {
                     seStartOnlyReverbLevel(Z2SE_AL_ICE_SLIP);
@@ -14492,7 +14546,7 @@ void daAlink_c::commonProcInit(daAlink_c::daAlink_PROC i_procID) {
         resetFacePriAnime();
     }
 
-    field_0x2fce = 5;
+    field_0x2fce = 5 * SCALE_TIME;  // frames (prevents immediate cut-dash follow-up / re-trigger)
     if (field_0x2f99 == 5) {
         field_0x2f99 = 0x30;
     } else if (field_0x2f99 == 4) {
@@ -15170,7 +15224,7 @@ int daAlink_c::procSideStepLandInit() {
         field_0x2f98 = 2;
         mProcVar1.field_0x300a = 0;
         field_0x2fb0 = 0;
-        field_0x2fcc = 10;
+        field_0x2fcc = 10 * SCALE_TIME;  // frames (landing action lockout / buffer window)
     } else {
         daAlink_ANM anm_id;
         u16 uvar3;
@@ -15185,7 +15239,7 @@ int daAlink_c::procSideStepLandInit() {
         setSingleAnimeParam(anm_id, &mpHIO->mSideStep.m.mSideLandAnm);
         field_0x3478 = mpHIO->mSideStep.m.mSideLandAnm.mCancelFrame;
         mProcVar1.field_0x300a = 1;
-        field_0x2fb0 = 8;
+        field_0x2fb0 = 8 * SCALE_TIME;  // frames (side-roll window after sidestep landing)
         field_0x2fcc = 0;
 
         if (checkEnemyGroup(mTargetedActor) && mEquipItem == 0x103 && checkNoUpperAnime()) {
@@ -15209,7 +15263,7 @@ int daAlink_c::procSideStepLand() {
     onEndResetFlg0(ERFLG0_UNK_8000000);
 
     if (field_0x2fcc != 0) {
-        field_0x2fcc = 10;
+        field_0x2fcc = 10 * SCALE_TIME;  // frames (landing action lockout / buffer window)
     }
 
     if (doTrigger() && mProcVar1.field_0x300a != 0) {
@@ -15236,7 +15290,7 @@ int daAlink_c::procSlideInit(s16 param_0) {
     commonProcInit(PROC_SLIDE);
 
     field_0x814.SetWeight(255);
-    field_0x3090 = 8;
+    field_0x3090 = 8 * SCALE_TIME;  // frames (anti-retrigger grace period)
     current.angle.y = param_0;
 
     if (getMoveBGActorName(mLinkAcch.m_gnd, FALSE) == PROC_Obj_Lv3R10Saka) {
@@ -15439,7 +15493,7 @@ int daAlink_c::procFrontRoll() {
 
     cM3dGPla poly;
     if (getSlidePolygon(&poly)) {
-        cLib_chaseF(&mNormalSpeed, 0.0f, 2.5f);
+        cLib_chaseF(&mNormalSpeed, 0.0f, 2.5f);  // cLib_chaseF internally scales by DELTA_TIME
     }
 
     if (checkInputOnR()) {
@@ -15468,7 +15522,7 @@ int daAlink_c::procFrontRoll() {
         }
     } else if (frameCtrl_p->getFrame() > mpHIO->mFrontRoll.m.mRollAnm.mCancelFrame) {
         onModeFlg(4);
-        cLib_chaseF(&mNormalSpeed, 0.0f, 2.5f);
+        cLib_chaseF(&mNormalSpeed, 0.0f, 2.5f);  // cLib_chaseF internally scales by DELTA_TIME
 
         if (checkZeroSpeedF()) {
             onModeFlg(1);
@@ -15477,7 +15531,7 @@ int daAlink_c::procFrontRoll() {
         if (mProcVar2.field_0x300c != 0) {
             procCutFinishInit(2);
         } else if (!checkNextAction(1)) {
-            cLib_chaseF(&mNormalSpeed, 0.0f, 2.5f);
+            cLib_chaseF(&mNormalSpeed, 0.0f, 2.5f);  // cLib_chaseF internally scales by DELTA_TIME
         }
     } else if (mDemo.getDemoMode() != 0x28 &&
                speedF >= mpHIO->mFrontRoll.m.mCrashSpeedThreshold &&
@@ -15519,7 +15573,7 @@ int daAlink_c::procFrontRoll() {
                 field_0x2f93 = 6;
             }
 
-            cLib_chaseF(&mNormalSpeed, 0.0f, 1.0f);
+            cLib_chaseF(&mNormalSpeed, 0.0f, 1.0f);  // cLib_chaseF internally scales by DELTA_TIME
         } else if (frameCtrl_p->getFrame() > 6.0f) {
             field_0x2f9d = 4;
         }
@@ -15772,7 +15826,7 @@ int daAlink_c::procBackJumpInit(int param_0) {
 
     if (horse_ride) {
         onModeFlg(0x2000);
-        mProcVar0.field_0x3008 = 5;
+        mProcVar0.field_0x3008 = (s16)(5 * SCALE_TIME);  // frames to keep MODE 0x2000 enabled
     } else {
         mProcVar0.field_0x3008 = 0;
     }
@@ -15830,7 +15884,7 @@ int daAlink_c::procBackJumpLandInit(int i_cutDirection) {
 
     field_0x3198 = i_cutDirection;
     current.angle.y = shape_angle.y;
-    field_0x2fcc = 10;
+    field_0x2fcc = 10 * SCALE_TIME;  // frames (landing action lockout / buffer window)
     setStepLandVibration();
 
     return 1;
@@ -15840,7 +15894,7 @@ int daAlink_c::procBackJumpLand() {
     daPy_frameCtrl_c* frameCtrl = mUnderFrameCtrl;
 
     if (field_0x2fcc != 0) {
-        field_0x2fcc = 10;
+        field_0x2fcc = 10 * SCALE_TIME;  // frames (landing action lockout / buffer window)
     }
 
     onEndResetFlg0(ERFLG0_UNK_8000000);
@@ -15872,7 +15926,7 @@ int daAlink_c::procSlipInit() {
 
     field_0x2f9d = 0x40;
     setFootEffectProcType(1);
-    mProcVar0.field_0x3008 = 5;
+    mProcVar0.field_0x3008 = (s16)(5 * SCALE_TIME);  // frames (slip wall-check / cancel timer)
 
     return 1;
 }
@@ -15951,7 +16005,7 @@ int daAlink_c::procAutoJumpInit(int param_0) {
     if (chk_mode_400 || (mDemo.getDemoMode() == 0x18 && mDemo.getParam0() == 1)) {
         if (chk_mode_400) {
             onModeFlg(0x2000);
-            mProcVar0.field_0x3008 = 5;
+            mProcVar0.field_0x3008 = (s16)(5 * SCALE_TIME);  // frames to keep MODE 0x2000 enabled
         }
 
         setSingleAnimeBaseSpeed(ANM_JUMP_LAND, 0.0f,
@@ -16322,10 +16376,10 @@ int daAlink_c::procFallInit(int param_0, f32 param_1) {
     }
 
     if (temp_r29) {
-        mProcVar1.field_0x300a = 2;
+        mProcVar1.field_0x300a = (s16)(2 * SCALE_TIME);  // frames (early wall-type action window)
         field_0x32cc = 1;
     } else {
-        mProcVar1.field_0x300a = 7;
+        mProcVar1.field_0x300a = (s16)(7 * SCALE_TIME);  // frames (delayed wall-type action window)
         field_0x32cc = 0;
     }
 
@@ -16799,7 +16853,7 @@ int daAlink_c::procCoMetamorphose() {
             return 1;
         }
 
-        mClothesChangeWaitTimer = 4;
+        mClothesChangeWaitTimer = 4 * SCALE_TIME;  // frames (metamorphose sequence pacing)
         mpWlMidnaModel = NULL;
         mProcVar0.field_0x3008 = 1;
 
@@ -16897,7 +16951,7 @@ int daAlink_c::procCoMetamorphoseOnlyInit() {
 
 int daAlink_c::procCoMetamorphoseOnly() {
     if (mProcVar2.field_0x300c == 0) {
-        mClothesChangeWaitTimer = 4;
+        mClothesChangeWaitTimer = 4 * SCALE_TIME;  // frames (metamorphose sequence pacing)
         mProcVar2.field_0x300c = 1;
     } else if (mClothesChangeWaitTimer == 0) {
         if (mProcVar3.field_0x300e == 0) {
@@ -17217,17 +17271,26 @@ int daAlink_c::execute() {
     if (field_0x3100 != 0) {
         field_0x3100--;
     }
-
+   
     if (field_0x2fc4 != 0) {
-        field_0x2fc4--;
+        if (SCALE_TIME <= 1) {
+            field_0x2fc4--;
+        } else {
+            static int s_field2fc4DecDiv;  // estimated: frame-divider accumulator for u8 timer (prevents 60fps overflow)
+            s_field2fc4DecDiv++;
+            if (s_field2fc4DecDiv >= SCALE_TIME) {
+                s_field2fc4DecDiv = 0;
+                field_0x2fc4--;
+            }
+        }
+    }   // lines 17268-17279 were originally: if (field_0x2fc4 != 0) { field_0x2fc4--; }  
+
+    if (mWolfDashTimer != 0) {
+        mWolfDashTimer--;
     }
 
-    if (field_0x30d2 != 0) {
-        field_0x30d2--;
-    }
-
-    if (field_0x30d0 != 0) {
-        field_0x30d0--;
+    if (mWolfDashDistTimer != 0) {
+        mWolfDashDistTimer--;
     } else {
         offNoResetFlg1(FLG1_DASH_MODE);
     }
@@ -17289,7 +17352,7 @@ int daAlink_c::execute() {
     }
 
     if (checkEndResetFlg0(ERFLG0_ENEMY_DEAD) && mEquipItem == 0x103) {
-        mSwordFlourishTimer = mpHIO->mCut.m.mFlourishTime;
+        mSwordFlourishTimer = mpHIO->mCut.m.mFlourishTime * SCALE_TIME;  // frames
     }
 
     if ((checkWolf() && field_0x2fbc == 11 && checkWaterPolygonUnder()) || field_0x2fbb == 11) {
@@ -17684,13 +17747,41 @@ int daAlink_c::execute() {
             checkWolfUseAbility();
 
             if (checkWolfEyeUp() != 0) {
+                if (SCALE_TIME <= 1) {
+                    mWolfEyeUpTimer++;
+                } else {
+                    static int s_wolfEyeUpTimerIncDiv;  // estimated: frame-divider accumulator for 30-step timer
+                    s_wolfEyeUpTimerIncDiv++;
+                    if (s_wolfEyeUpTimerIncDiv >= SCALE_TIME) {
+                        s_wolfEyeUpTimerIncDiv = 0;
+                        mWolfEyeUpTimer++;
+                    }
+                }
+
+                if (mWolfEyeUpTimer > 30) {
+                    mWolfEyeUpTimer = 30;
+                }
+            } else if (mWolfEyeUpTimer != 0) {
+                if (SCALE_TIME <= 1) {
+                    mWolfEyeUpTimer--;
+                } else {
+                    static int s_wolfEyeUpTimerDecDiv;  // estimated: frame-divider accumulator for 30-step timer
+                    s_wolfEyeUpTimerDecDiv++;
+                    if (s_wolfEyeUpTimerDecDiv >= SCALE_TIME) {
+                        s_wolfEyeUpTimerDecDiv = 0;
+                        mWolfEyeUpTimer--;
+                    }
+                }
+            }
+            /*  lines 17726 through 17752 were originally:
+            if (checkWolfEyeUp() != 0) {
                 mWolfEyeUpTimer++;
                 if (mWolfEyeUpTimer > 30) {
                     mWolfEyeUpTimer = 30;
                 }
             } else if (mWolfEyeUpTimer != 0) {
                 mWolfEyeUpTimer--;
-            }
+            }*/
 
             setWolfItemMatrix();
         }
@@ -17746,11 +17837,13 @@ int daAlink_c::execute() {
             if (mHotspringRecoverTimer != 0) {
                 mHotspringRecoverTimer--;
             } else {
-                mHotspringRecoverTimer = mpHIO->mBasic.m.mHotspringRecoverTime;
+                mHotspringRecoverTimer =
+                    mpHIO->mBasic.m.mHotspringRecoverTime * SCALE_TIME;  // frames (hotspring heal tick)
                 dComIfGp_setItemLifeCount(1.0f, 1);
             }
         } else {
-            mHotspringRecoverTimer = mpHIO->mBasic.m.mHotspringRecoverTime;
+            mHotspringRecoverTimer =
+                mpHIO->mBasic.m.mHotspringRecoverTime * SCALE_TIME;  // frames (hotspring heal tick)
         }
 
         if (checkAttentionLock() || (!checkUpperReadyThrowAnime() &&
@@ -17795,14 +17888,14 @@ int daAlink_c::execute() {
         field_0x2fb8 = 0;
 
         if (checkMagicArmorWearAbility() && mClothesChangeWaitTimer == 0) {
-            if (checkMagicArmorNoDamage() && !checkEventRun()) {
-                if (field_0x2fc3 == 0) {
-                    field_0x2fc3 = 10;
-                    dComIfGp_setItemRupeeCount(-1);
-                } else {
-                    field_0x2fc3--;
+                if (checkMagicArmorNoDamage() && !checkEventRun()) {
+                    if (field_0x2fc3 == 0) {
+                        field_0x2fc3 = 10 * SCALE_TIME;  // frames (magic armor rupee-drain tick)
+                        dComIfGp_setItemRupeeCount(-1);
+                    } else {
+                        field_0x2fc3--;
+                    }
                 }
-            }
 
             if (dComIfGs_getRupee() == 0 && field_0x2fd7 != 0) {
                 setMagicArmorBrk(0);
@@ -18731,7 +18824,10 @@ int daAlink_c::draw() {
         if (checkShieldDraw()) {
             BOOL var_r24_2;
             if (checkWoodShieldEquip() && field_0x2fcb != 0 && mProcID != PROC_METAMORPHOSE) {
-                tevStr.TevColor.r = -((120 - field_0x2fcb) * 32) / 120;
+                // Scale the burn/flash duration so it stays visually consistent when `SCALE_TIME` > 1.
+                s32 burn_scale = SCALE_TIME > 0 ? SCALE_TIME : 1;
+                s32 burn_max = 120 * burn_scale;
+                tevStr.TevColor.r = -((burn_max - field_0x2fcb) * 32) / burn_max;
                 tevStr.TevColor.g = tevStr.TevColor.r;
                 tevStr.TevColor.b = tevStr.TevColor.r;
                 var_r24_2 = 1;

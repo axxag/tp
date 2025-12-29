@@ -3,12 +3,16 @@
  * Player Clawshot action handling
  */
 
+#include "../../../include/dolphin/os.h"
+#include "JSystem/J3DGraphBase/J3DMaterial.h"
 #include "d/actor/d_a_alink.h"
 #include "d/actor/d_a_b_dr.h"
-#include "d/actor/d_a_obj_swhang.h"
 #include "d/actor/d_a_obj_chandelier.h"
-#include "JSystem/J3DGraphBase/J3DMaterial.h"
+#include "d/actor/d_a_obj_swhang.h"
+#include "res/Object/AlAnm.h"
 
+class JKRHeap;
+class J3DAnmTransform;
 enum {
     HS_MODE_NONE_e,
     HS_MODE_READY_e,
@@ -186,7 +190,7 @@ void daAlink_c::hsChainShape_c::draw() {
         if (temp_f1 > 1.0f) {
             maxDistance *= (1.0f / temp_f1);
             var_f30 = 0.0f;
-            
+
             sp98 = sp2C;
             sp6C.set(maxDistance.atan2sY_XZ(), maxDistance.atan2sX_Z(), 0);
 
@@ -701,7 +705,8 @@ void daAlink_c::setHookshotReturnEnd() {
         field_0x2060->initOldFrameMorf(3.0f, field_0x30a8, field_0x30aa);
     } else if (checkHookshotShootAnime()) {
         setUpperAnimeBaseSpeed(
-            0x18D, checkAttentionLock() ? mpHIO->mItem.mHookshot.m.mWaitAnmSpeed : 0.0f, 3.0f);
+            0x18D, checkAttentionLock() ? mpHIO->mItem.mHookshot.m.mWaitAnmSpeed : 0.0f,
+            (3.0f * DELTA_TIME ));
     }
 
     mFastShotTime = 0;
@@ -734,7 +739,7 @@ int daAlink_c::setHookshotHangMoveBGCollect() {
 
         if (dComIfG_Bgsp().ChkMoveBG(*poly)) {
             dComIfG_Bgsp().MoveBgTransPos(*poly, 1, &current.pos, &current.angle, &shape_angle);
-            
+
             csXyz sp8(0, field_0x3022, 0);
             dComIfG_Bgsp().MoveBgTransPos(*poly, 1, &mIronBallBgChkPos, NULL, &sp8);
             field_0x3022 = sp8.y;
@@ -840,7 +845,7 @@ void daAlink_c::setHookshotPos() {
                 seStartOnlyReverb(Z2SE_AL_HS_OPEN);
             }
 
-            field_0x33e0 += 1.0f;
+            field_0x33e0 += 1.0f * DELTA_TIME;
             if (field_0x33e0 > mHookTipBck.getBckAnm()->getFrameMax()) {
                 field_0x33e0 = mHookTipBck.getBckAnm()->getFrameMax();
             }
@@ -881,7 +886,7 @@ void daAlink_c::setHookshotPos() {
             }
         }
 
-        if (checkModeFlg(0x400)) {
+        if (checkModeFlg(MODE_RIDING)) {
             return_speed += current.pos.abs(field_0x3798);
         }
 
@@ -1139,11 +1144,11 @@ void daAlink_c::setHookshotPos() {
     if (dComIfGp_checkPlayerStatus1(0, 0x10000)) {
         mDoMtx_stack_c::transS(mIronBallBgChkPos);
         mDoMtx_stack_c::ZXYrotM(-0x4000, field_0x3022, 0);
-        bck_frame = 14.0f;
+        bck_frame = 14.0f * DELTA_TIME;
     } else if (dComIfGp_checkPlayerStatus1(0, 0x2000000)) {
         mDoMtx_stack_c::transS(mIronBallBgChkPos);
         mDoMtx_stack_c::ZXYrotM(0, field_0x3022, 0);
-        bck_frame = 14.0f;
+        bck_frame = 14.0f * DELTA_TIME;
     } else {
         if (field_0x3024 != 0) {
             cLib_chasePos(&mIronBallBgChkPos, field_0x3810, 2.0f * return_speed);
@@ -1524,7 +1529,9 @@ int daAlink_c::procHookshotFly() {
     setHookshotTopPosFly();
 
     field_0x37d4 = mHookshotTopPos - mHeldItemRootPos;
-    if (mProcVar0.field_0x3008 != 0 && cLib_distanceAngleS(field_0x37d4.atan2sX_Z(), temp_r24) > 0x4000) {
+    if (mProcVar0.field_0x3008 != 0 &&
+        cLib_distanceAngleS(field_0x37d4.atan2sX_Z(), temp_r24) > 0x4000)
+    {
         setHookshotReturnEnd();
     } else {
         mProcVar0.field_0x3008 = 0;

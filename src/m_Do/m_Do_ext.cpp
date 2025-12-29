@@ -1544,7 +1544,7 @@ void mDoExt_McaMorfSO::setAnm(J3DAnmTransform* i_anm, int i_attr, f32 i_morf, f3
     setPlayMode(i_attr);
     setPlaySpeed(i_rate);
 
-    if (i_rate >= 0.0f) {
+    if (i_rate * DELTA_TIME >= 0.0f) {
         setFrame(i_start);
     } else {
         setFrame(getEndFrame());
