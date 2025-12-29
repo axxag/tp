@@ -678,13 +678,14 @@ bool dMenu_Ring_c::isOpen() {
 bool dMenu_Ring_c::isMoveEnd() {
     bool ret = 0;
     if (mStatus == STATUS_WAIT && mOldStatus != STATUS_EXPLAIN_FORCE && mOldStatus != STATUS_EXPLAIN) {
-        // Boofener: Removed dpad down, only dpad up closes item wheel now
-        if (dMw_UP_TRIGGER() || dMw_B_TRIGGER() ||
+        if (dMw_UP_TRIGGER() || dMw_DOWN_TRIGGER() || dMw_B_TRIGGER() ||
             dMeter2Info_getWarpStatus() == 2 || dMeter2Info_getWarpStatus() == 1 ||
             dMeter2Info_isTouchKeyCheck(0xe))
         {
             if (dMw_UP_TRIGGER()) {
                 mRingOrigin = 0;
+            } else if (dMw_DOWN_TRIGGER()) {
+                mRingOrigin = 2;
             } else {
                 mRingOrigin = 0xff;
             }
@@ -1425,7 +1426,7 @@ void dMenu_Ring_c::stick_move_proc() {
     } else {
         if (field_0x6d3 == 0xff) {
             cLib_addCalcAngleS(&field_0x66e, field_0x670, 4, 0x7FFF, mCursorSpeed);
-        } else{
+        } else {
             if (field_0x6d3 == 0) {
                 field_0x66e = -0x2007;
             } else {

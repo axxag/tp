@@ -2069,6 +2069,14 @@ inline void dComIfGs_setLastWarpAcceptStage(s8 param_0) {
     g_dComIfG_gameInfo.info.getPlayer().getPlayerLastMarkInfo().setWarpAcceptStage(param_0);
 }
 
+inline bool dComIfGs_getOptCameraHInvert() {
+    return g_dComIfG_gameInfo.info.getPlayer().getConfig().getCameraHInvert();
+}
+
+inline void dComIfGs_setOptCameraHInvert(bool i_invert) {
+    g_dComIfG_gameInfo.info.getPlayer().getConfig().setCameraHInvert(i_invert);
+}
+
 inline u8 dComIfGs_getNewFile() {
     return g_dComIfG_gameInfo.info.getNewFile();
 }

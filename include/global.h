@@ -1,6 +1,8 @@
 #ifndef _global_h_
 #define _global_h_
 
+#include "dolphin/types.h"
+
 // Version ordering defined in configure.py
 #define VERSION_GCN_USA          0
 #define VERSION_GCN_PAL          1

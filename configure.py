@@ -265,9 +265,9 @@ cflags_base = [
 ]
 
 if config.version in ["RZDE01_00", "RZDE01_02", "RZDP01", "RZDJ01", "Shield", "ShieldD"]:
-    cflags_base.extend(["-enc SJIS"])
+    cflags_base.extend(["-enc SJIS", "-DWIDESCREEN_SUPPORT=1"])
 else:
-    cflags_base.extend(["-multibyte"])
+    cflags_base.extend(["-multibyte", "-DWIDESCREEN_SUPPORT=1"])
 
 USE_REVOLUTION_SDK_VERSIONS = [
     "RZDE01_00", # Wii USA Rev 0
@@ -288,9 +288,13 @@ if config.version in USE_REVOLUTION_SDK_VERSIONS:
 # Debug flags
 if args.debug:
     # Or -sym dwarf-2 for Wii compilers
-    cflags_base.extend(["-sym on", "-DDEBUG=1"])
+    cflags_base.extend(["-sym on", "-DDEBUG=1", "-DDEBUG_DEFINED=1", "-DNDEBUG_DEFINED=0"])
 elif config.version == "ShieldD":
     cflags_base.extend(["-DDEBUG=1"])
+
+# Development mode flag (read from .env via environment)
+dev_mode = os.environ.get("DEVELOPMENT_MODE", "true").lower() == "true"
+cflags_base.append(f"-DDEVELOPMENT_MODE={1 if dev_mode else 0}")
 
 # Warning flags
 if args.warn == "all":
@@ -354,12 +358,18 @@ cflags_revolution_base = [
 cflags_revolution_retail = [
     *cflags_revolution_base,
     "-O4,p",
+    "-DNDEBUG=1",
+    "-DNDEBUG_DEFINED=1",
+    "-DDEBUG_DEFINED=0",
 ]
 
 cflags_revolution_debug = [
     *cflags_revolution_base,
     "-opt off",
     "-inline off",
+    "-DDEBUG=1",
+    "-DDEBUG_DEFINED=1",
+    "-DNDEBUG_DEFINED=0",
 ]
 
 # Framework flags

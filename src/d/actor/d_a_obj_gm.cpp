@@ -495,7 +495,7 @@ static void action(obj_gm_class* i_this) {
     }
 
     if (bVar1) {
-        s16 target = i_this->field_0x648 * cM_ssin(i_this->frameCounter * neg[i_this->mType]);
+        s16 target = i_this->field_0x648 * cM_ssin(i_this->field_0x608 * neg[i_this->mType]);
         cLib_addCalc2(&i_this->field_0x648, NREG_F(8) + 2000.0f, 0.05f, TREG_F(5) + 10.0f);
         cLib_addCalcAngleS2(&i_this->field_0x64c[0], target, 16, 200);
     }
@@ -548,7 +548,7 @@ static int daObj_Gm_Execute(obj_gm_class* i_this) {
         }
     }
 
-    i_this->frameCounter++;
+    i_this->field_0x608++;
 
     if (i_this->field_0x948 != 0) {
         i_this->field_0x948--;
@@ -700,7 +700,7 @@ static cPhs__Step daObj_Gm_Create(fopAc_ac_c* a_this) {
         i_this->mBgc.Set(fopAcM_GetPosition_p(a_this), fopAcM_GetOldPosition_p(a_this), a_this, 1, &i_this->mAcchCir, fopAcM_GetSpeed_p(a_this), NULL, NULL);
         i_this->mAcchCir.SetWall(50.0f, obj_size[i_this->mType]);
         
-        i_this->frameCounter = cM_rndF(65536.0f);
+        i_this->field_0x608 = cM_rndF(65536.0f);
 
         daObj_Gm_Execute(i_this);
 

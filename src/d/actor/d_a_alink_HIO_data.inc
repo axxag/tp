@@ -1850,7 +1850,7 @@ const daAlinkHIO_bottle_c1 daAlinkHIO_bottle_c0::m = {
 };
 
 const daAlinkHIO_hookshot_c1 daAlinkHIO_hookshot_c0::m = {
-	{ // no clue what this animation is
+	{
 		12,
         1.0f,
         0.0f,
@@ -1873,7 +1873,7 @@ const daAlinkHIO_hookshot_c1 daAlinkHIO_hookshot_c0::m = {
 	},
     0,
     1.0f * DELTA_TIME, //Speed link moves when lock on and hold hook
-    3.0f, //No idea what this does
+    3.0f,
     2000.0f,
     100.0f * DELTA_TIME,
     150.0f * DELTA_TIME,

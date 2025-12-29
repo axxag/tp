@@ -9812,7 +9812,7 @@ void daAlink_c::decideCommonDoStatus() {
                     }
                 } else if (checkAttentionLock()) {
                     setDoStatus(0x8B);
-                } else if (mWolfDashTimer == 0 &&
+                } else if (field_0x30d2 == 0 &&
                            (field_0x33a8 > getFrontRollRate() || checkAttentionLock()))
                 {
                     setDoStatus(9);
@@ -17285,12 +17285,12 @@ int daAlink_c::execute() {
         }
     }   // lines 17268-17279 were originally: if (field_0x2fc4 != 0) { field_0x2fc4--; }  
 
-    if (mWolfDashTimer != 0) {
-        mWolfDashTimer--;
+    if (field_0x30d2 != 0) {
+        field_0x30d2--;
     }
 
-    if (mWolfDashDistTimer != 0) {
-        mWolfDashDistTimer--;
+    if (field_0x30d0 != 0) {
+        field_0x30d0--;
     } else {
         offNoResetFlg1(FLG1_DASH_MODE);
     }

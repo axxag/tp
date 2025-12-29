@@ -75,12 +75,12 @@ void daAlink_c::setArrowShieldActor(fopAc_ac_c* i_actor, int param_1) {
 
     int arrow_num = 0;
     for (; arrow_num < 16; arrow_num++) {
-            if (mShieldArrowIDs[arrow_num] == fpcM_ERROR_PROCESS_ID_e) {
-                mShieldArrowIDs[arrow_num] = new_arrow_id;
-                field_0x2f7c[arrow_num] = (u8)(10 * SCALE_TIME);
-                break;
-            }
+        if (mShieldArrowIDs[arrow_num] == fpcM_ERROR_PROCESS_ID_e) {
+            mShieldArrowIDs[arrow_num] = new_arrow_id;
+            field_0x2f7c[arrow_num] = (u8)(10 * SCALE_TIME);
+            break;
         }
+    }
 
     if (arrow_num == 16) {
         fopAc_ac_c* first_arrow = fopAcM_SearchByID(mShieldArrowIDs[0]);

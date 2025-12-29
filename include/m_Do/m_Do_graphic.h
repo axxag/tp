@@ -118,8 +118,6 @@ public:
     static f32 getWidthF() {
         #if WIDESCREEN_SUPPORT
         return m_widthF;
-        #elif WIDESCREEN_SUPPORT
-        return m_widthF;
         #else
         return FB_WIDTH;
         #endif
@@ -127,8 +125,6 @@ public:
 
     static f32 getHeightF() {
         #if WIDESCREEN_SUPPORT
-        return m_heightF;
-        #elif WIDESCREEN_SUPPORT
         return m_heightF;
         #else
         return FB_HEIGHT;
@@ -141,8 +137,6 @@ public:
     static f32 getMinYF() {
         #if WIDESCREEN_SUPPORT
         return m_minYF;
-        #elif WIDESCREEN_SUPPORT
-        return m_minYF;
         #else
         return 0.0f;
         #endif
@@ -150,8 +144,6 @@ public:
 
     static f32 getMinXF() {
         #if WIDESCREEN_SUPPORT
-        return m_minXF;
-        #elif WIDESCREEN_SUPPORT
         return m_minXF;
         #else
         return 0.0f;
@@ -161,8 +153,6 @@ public:
     static f32 getMaxYF() {
         #if WIDESCREEN_SUPPORT
         return m_maxYF;
-        #elif WIDESCREEN_SUPPORT
-        return m_maxYF;
         #else
         return FB_HEIGHT;
         #endif
@@ -170,8 +160,6 @@ public:
 
     static f32 getMaxXF() {
         #if WIDESCREEN_SUPPORT
-        return m_maxXF;
-        #elif WIDESCREEN_SUPPORT
         return m_maxXF;
         #else
         return FB_WIDTH;

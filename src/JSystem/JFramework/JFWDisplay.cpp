@@ -18,7 +18,7 @@ void JFWDisplay::ctor_subroutine(bool enableAlpha) {
     mZClear = 0xFFFFFF;
     mGamma = 0;
     mFader = NULL;
-    mFrameRate = 1; 
+    mFrameRate = 1;
     mTickRate = 0;
     mCombinationRatio = 0.0f;
     field_0x30 = 0;

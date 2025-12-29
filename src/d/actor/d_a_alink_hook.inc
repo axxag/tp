@@ -3,16 +3,12 @@
  * Player Clawshot action handling
  */
 
-#include "../../../include/dolphin/os.h"
-#include "JSystem/J3DGraphBase/J3DMaterial.h"
 #include "d/actor/d_a_alink.h"
 #include "d/actor/d_a_b_dr.h"
-#include "d/actor/d_a_obj_chandelier.h"
 #include "d/actor/d_a_obj_swhang.h"
-#include "res/Object/AlAnm.h"
+#include "d/actor/d_a_obj_chandelier.h"
+#include "JSystem/J3DGraphBase/J3DMaterial.h"
 
-class JKRHeap;
-class J3DAnmTransform;
 enum {
     HS_MODE_NONE_e,
     HS_MODE_READY_e,
@@ -190,7 +186,7 @@ void daAlink_c::hsChainShape_c::draw() {
         if (temp_f1 > 1.0f) {
             maxDistance *= (1.0f / temp_f1);
             var_f30 = 0.0f;
-
+            
             sp98 = sp2C;
             sp6C.set(maxDistance.atan2sY_XZ(), maxDistance.atan2sX_Z(), 0);
 
@@ -739,7 +735,7 @@ int daAlink_c::setHookshotHangMoveBGCollect() {
 
         if (dComIfG_Bgsp().ChkMoveBG(*poly)) {
             dComIfG_Bgsp().MoveBgTransPos(*poly, 1, &current.pos, &current.angle, &shape_angle);
-
+            
             csXyz sp8(0, field_0x3022, 0);
             dComIfG_Bgsp().MoveBgTransPos(*poly, 1, &mIronBallBgChkPos, NULL, &sp8);
             field_0x3022 = sp8.y;
@@ -886,7 +882,7 @@ void daAlink_c::setHookshotPos() {
             }
         }
 
-        if (checkModeFlg(MODE_RIDING)) {
+        if (checkModeFlg(0x400)) {
             return_speed += current.pos.abs(field_0x3798);
         }
 
@@ -1529,9 +1525,7 @@ int daAlink_c::procHookshotFly() {
     setHookshotTopPosFly();
 
     field_0x37d4 = mHookshotTopPos - mHeldItemRootPos;
-    if (mProcVar0.field_0x3008 != 0 &&
-        cLib_distanceAngleS(field_0x37d4.atan2sX_Z(), temp_r24) > 0x4000)
-    {
+    if (mProcVar0.field_0x3008 != 0 && cLib_distanceAngleS(field_0x37d4.atan2sX_Z(), temp_r24) > 0x4000) {
         setHookshotReturnEnd();
     } else {
         mProcVar0.field_0x3008 = 0;

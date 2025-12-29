@@ -8,15 +8,10 @@
 #include "d/d_meter2_draw.h"
 #include "JSystem/J2DGraph/J2DAnmLoader.h"
 #include "JSystem/J2DGraph/J2DGrafContext.h"
-#include "JSystem/J2DGraph/J2DPicture.h"
 #include "JSystem/J2DGraph/J2DScreen.h"
 #include "JSystem/J2DGraph/J2DTextBox.h"
-#include "JSystem/JUtility/JUTTexture.h"
-#include "JSystem/JKernel/JKRAramArchive.h"
 #include "JSystem/JKernel/JKRExpHeap.h"
 #include "d/actor/d_a_alink.h"
-#include "d/actor/d_a_midna.h"
-#include "d/actor/d_a_player.h"
 #include "d/d_item.h"
 #include "d/d_item_data.h"
 #include "d/d_kantera_icon_meter.h"
@@ -61,10 +56,6 @@ dMeter2Draw_c::dMeter2Draw_c(JKRExpHeap* mp_heap) {
     for (int i = 0; i < 2; i++) {
         mpKanteraMeter[i] = new dKantera_icon_c();
         JUT_ASSERT(0, mpKanteraMeter[i] != NULL);
-        mTransformIconTex[i] = NULL;
-        for (int j = 0; j < 2; j++) {
-            mpDpadDownIcon[i][j] = NULL;
-        }
     }
 
     mpKanteraScreen = new J2DScreen();
@@ -159,8 +150,6 @@ dMeter2Draw_c::~dMeter2Draw_c() {
     dComIfGp_getMsgDtArchive(0)->removeResource(dMeter2Info_getMsgResource());
     dComIfGp_getMsgDtArchive(0)->removeResource(dMeter2Info_getMsgUnitResource());
     dComIfGp_getItemIconArchive()->removeResourceAll();
-
-    clearTransformHintIcons(); // new function call for cleanup
 
     delete mpScreen;
     mpScreen = NULL;
@@ -583,8 +572,6 @@ void dMeter2Draw_c::exec(u32 i_status) {
             mpButtonParent->scale(g_drawHIO.mMainHUDButtonsScale, g_drawHIO.mMainHUDButtonsScale);
         }
     }
-
-    updateTransformHintIcons(); // new function call for form check
 }
 
 void dMeter2Draw_c::draw() {
@@ -592,7 +579,6 @@ void dMeter2Draw_c::draw() {
     graf_ctx->setup2D();
 
     mpScreen->draw(0.0f, 0.0f, graf_ctx);
-    drawTransformHintIcon(graf_ctx); // new function call for drawing
     drawKanteraScreen(1);
     drawKanteraScreen(2);
 
@@ -723,32 +709,6 @@ void dMeter2Draw_c::draw() {
                    g_drawHIO.mMidnaIconPikariFrontOuter, g_drawHIO.mMidnaIconPikariFrontInner,
                    g_drawHIO.mMidnaIconPikariBackOuter, g_drawHIO.mMidnaIconPikariBackInner,
                    g_drawHIO.mMidnaIconPikariAnimSpeed, 3);
-    }
-
-    // Draw FPS mode indicator
-    JUTFont* font = mDoExt_getMesgFont();
-    if (font) {
-        font->setGX();
-
-        const char* fpsLabel;
-        if (getStaleMode()) {
-            fpsLabel = "STALE";
-            font->setCharColor(JUtility::TColor(128, 128, 128, 255));
-        } else {
-            float currentFPS = getTargetFramerate();
-            if (currentFPS <= 30.0f) {
-                fpsLabel = "30";
-                font->setCharColor(JUtility::TColor(255, 255, 255, 255));
-            } else if (currentFPS <= 60.0f) {
-                fpsLabel = "60";
-                font->setCharColor(JUtility::TColor(100, 200, 255, 255));
-            } else {
-                fpsLabel = "MAX";
-                font->setCharColor(JUtility::TColor(255, 200, 100, 255));
-            }
-        }
-
-        font->drawString_scale(580.0f, 20.0f, 10.0f, 10.0f, fpsLabel, true);
     }
 }
 
@@ -1299,8 +1259,6 @@ void dMeter2Draw_c::initButtonCross() {
 
     mpButtonCrossParent->setAlphaRate(0.0f);
     drawButtonCross(g_drawHIO.mButtonCrossOFFPosX, g_drawHIO.mButtonCrossOFFPosY);
-
-    initTransformHintIcons(); // new function call to init the icon on dpad
 }
 
 void dMeter2Draw_c::playPikariBckAnimation(f32 i_frame) {
@@ -3945,191 +3903,6 @@ bool dMeter2Draw_c::getItemSubject() {
 
 bool dMeter2Draw_c::getPlayerSubject() {
     return dComIfGp_checkPlayerStatus0(0, 0x8000000);
-}
-
-// DEV: HUD transform hint (D-pad down).
-// Loads the same Link/Wolf map icon BTIs used on the dungeon map screen and displays the opposite
-// form icon as a hint (Human -> Wolf icon, Wolf -> Link icon).
-void dMeter2Draw_c::initTransformHintIcons() {
-    clearTransformHintIcons();
-
-    JKRArchive* iconArchive = dComIfGp_getDmapResArchive();
-    if (iconArchive == NULL) {
-        iconArchive = dComIfGp_getFmapResArchive();
-    }
-    if (iconArchive == NULL) {
-        iconArchive = dComIfGp_getFieldMapArchive2();
-    }
-    if (iconArchive == NULL) {
-        iconArchive = dComIfGp_getAllMapArchive();
-    }
-    if (iconArchive == NULL) {
-        iconArchive = dComIfGp_getMain2DArchive();
-    }
-
-    ResTIMG* wolfTex = NULL;
-    if (iconArchive != NULL) {
-        // Dungeon map uses dedicated Wolf/Link icons for this toggle.
-        wolfTex = (ResTIMG*)iconArchive->getResource(
-            'TIMG', "im_dungeon_map_icon_wolf_ci8_48x45_ind_06.bti");
-        if (wolfTex == NULL) {
-            wolfTex = (ResTIMG*)iconArchive->getResource('TIMG', "tt_map_icon_wolf_ci8_32_00.bti");
-        }
-        if (wolfTex == NULL) {
-            wolfTex =
-                (ResTIMG*)iconArchive->getResource('TIMG', "tt_map_icon_wolf_s_ci8_24_00.bti");
-        }
-        // Fallback: gold wolf icon (not Wolf Link), in case the Wolf Link icon isn't present.
-        if (wolfTex == NULL) {
-            wolfTex = (ResTIMG*)iconArchive->getResource('TIMG', "st_gold_wolf.bti");
-        }
-    }
-    if (wolfTex == NULL) {
-        if (iconArchive != NULL) {
-            wolfTex = (ResTIMG*)JKRGetNameResource("im_dungeon_map_icon_wolf_ci8_48x45_ind_06.bti",
-                                                   iconArchive);
-        }
-    }
-    if (wolfTex == NULL) {
-        if (iconArchive != NULL) {
-            wolfTex = (ResTIMG*)JKRGetNameResource("tt_map_icon_wolf_ci8_32_00.bti", iconArchive);
-        }
-    }
-    if (wolfTex == NULL) {
-        if (iconArchive != NULL) {
-            wolfTex = (ResTIMG*)JKRGetNameResource("tt_map_icon_wolf_s_ci8_24_00.bti", iconArchive);
-        }
-    }
-    if (wolfTex == NULL) {
-        if (iconArchive != NULL) {
-            wolfTex = (ResTIMG*)JKRGetNameResource("st_gold_wolf.bti", iconArchive);
-        }
-    }
-
-    ResTIMG* linkTex = NULL;
-    if (iconArchive != NULL) {
-        linkTex = (ResTIMG*)iconArchive->getResource(
-            'TIMG', "im_dungeon_map_icon_rink_ci8_44x45_04.bti");
-        if (linkTex == NULL) {
-            linkTex = (ResTIMG*)iconArchive->getResource('TIMG', "tt_map_icon_link_ci8_32_00.bti");
-        }
-        if (linkTex == NULL) {
-            linkTex =
-                (ResTIMG*)iconArchive->getResource('TIMG', "tt_map_icon_link_s_ci8_24_00.bti");
-        }
-    }
-    if (linkTex == NULL) {
-        if (iconArchive != NULL) {
-            linkTex = (ResTIMG*)JKRGetNameResource("im_dungeon_map_icon_rink_ci8_44x45_04.bti",
-                                                   iconArchive);
-        }
-    }
-    if (linkTex == NULL) {
-        if (iconArchive != NULL) {
-            linkTex = (ResTIMG*)JKRGetNameResource("tt_map_icon_link_ci8_32_00.bti", iconArchive);
-        }
-    }
-    if (linkTex == NULL) {
-        if (iconArchive != NULL) {
-            linkTex = (ResTIMG*)JKRGetNameResource("tt_map_icon_link_s_ci8_24_00.bti", iconArchive);
-        }
-    }
-
-    // Same assets as dMenuMapCommon_c::initiate(): use the map icon BTIs.
-    // Index 0: show wolf icon while human; index 1: show Link icon while wolf.
-    mTransformIconTex[0] = wolfTex;
-    mTransformIconTex[1] = linkTex;
-}
-
-// DEV: Releases any cached J2DPicture instances for the transform hint icon.
-void dMeter2Draw_c::clearTransformHintIcons() {
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 2; j++) {
-            if (mpDpadDownIcon[i][j] != NULL) {
-                delete mpDpadDownIcon[i][j];
-                mpDpadDownIcon[i][j] = NULL;
-            }
-        }
-    }
-}
-
-// DEV: Lazily (re)initializes textures once the map UI archives are available.
-void dMeter2Draw_c::updateTransformHintIcons() {
-    if ((mTransformIconTex[0] == NULL || mTransformIconTex[1] == NULL) &&
-        (dComIfGp_getDmapResArchive() != NULL || dComIfGp_getFmapResArchive() != NULL ||
-         dComIfGp_getFieldMapArchive2() != NULL || dComIfGp_getAllMapArchive() != NULL))
-    {
-        initTransformHintIcons();
-    }
-}
-
-// DEV: Draws the transform hint icon anchored under the D-pad cross.
-void dMeter2Draw_c::drawTransformHintIcon(J2DGrafContext* graf_ctx) {
-    if (dComIfGp_isPauseFlag()) {
-        return;
-    }
-
-    if (mpButtonCrossParent == NULL || mpButtonCrossParent->getAlphaRate() == 0.0f) {
-        return;
-    }
-
-    // Only show icon if transformation is allowed
-    daAlink_c* linkPlayer = daAlink_getAlinkActorClass();
-    if (linkPlayer == NULL) {
-        return;
-    }
-
-    // Check transformation conditions (same as dpad down button check)
-    if (linkPlayer->checkEventRun() || linkPlayer->mProcID == daAlink_c::PROC_METAMORPHOSE) {
-        return;
-    }
-
-    daMidna_c* midna = (daMidna_c*)linkPlayer->getMidnaActor();
-    bool can_transform = midna != NULL && midna->checkMetamorphoseEnable();
-
-    if (!can_transform || !linkPlayer->mLinkAcch.ChkGroundHit() ||
-        linkPlayer->checkModeFlg(daAlink_c::MODE_PLAYER_FLY) || linkPlayer->checkMagneBootsOn()) {
-        return;
-    }
-
-    // Match dungeon-map behavior: show the opposite form icon as a hint.
-    // Human -> show wolf icon; Wolf -> show Link icon.
-    bool nowWolf = linkPlayer->checkWolf();
-    int iconIdx = nowWolf ? 1 : 0;
-    ResTIMG* tex = mTransformIconTex[iconIdx];
-    if (tex == NULL) {
-        return;
-    }
-
-    f32 scale = g_drawHIO.mDpadMAPScale;
-    if (scale <= 0.0f) { // scale and clamp icon size
-        scale = 0.6f;
-    }
-    scale *= 0.6f;
-
-    // Anchor to the D-pad cross itself so the icon doesn't shift with map/text state.
-    J2DPane* anchor = mpButtonCrossParent->getPanePtr();
-
-    Vec v0 = anchor->getGlbVtx(0);
-    Vec v3 = anchor->getGlbVtx(3);
-    f32 left = v0.x < v3.x ? v0.x : v3.x;
-    f32 right = v0.x > v3.x ? v0.x : v3.x;
-    f32 top = v0.y < v3.y ? v0.y : v3.y;
-    f32 bottom = v0.y > v3.y ? v0.y : v3.y;
-    f32 centerX = (left + right) * 0.498f;
-    f32 height = bottom - top;
-
-    J2DPicture pic(tex);
-    pic.setBasePosition(J2DBasePosition_4);
-    pic.setAlpha((u8)(mpButtonCrossParent->getAlphaRate() * 255.0f));
-    f32 drawW = tex->width * scale;
-    f32 drawH = tex->height * scale;
-    const f32 gapYScaleFromBottom = -0.2f;
-    f32 gapY = height * gapYScaleFromBottom;
-    const f32 centerOffsetX = -10.0f;
-    f32 posX = centerX - (drawW * 0.5f) + g_drawHIO.mDpadMAPPosX + centerOffsetX;
-    f32 posY = bottom + gapY + g_drawHIO.mDpadMAPPosY;
-    pic.draw(posX, posY, drawW, drawH, false, false, false);
 }
 
 bool dMeter2Draw_c::isBButtonShow(bool param_0) {

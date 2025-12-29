@@ -111,8 +111,7 @@ BOOL dMw_UP_TRIGGER() {
 }
 
 BOOL dMw_DOWN_TRIGGER() {
-    // Boofener: Disabled dpad down for menu - reserved for wolf transform
-    return 0;  // Always return false
+    return mDoCPd_c::getTrigDown(PAD_1) != 0;
 }
 
 BOOL dMw_LEFT_TRIGGER() {
@@ -616,8 +615,7 @@ void dMw_c::key_wait_proc() {
                 mMenuProc = DMAP_OPEN;
                 dMw_dmap_create();
             }
-        } else if (((dMw_UP_TRIGGER() && !dMw_LEFT_TRIGGER() && !dMw_RIGHT_TRIGGER()) || dMeter2Info_isMenuInForce(2)) &&
-                   !dMw_DOWN_TRIGGER() &&  // Boofener: Don't open menu if dpad down is pressed (used for wolf transform)
+        } else if ((((dMw_UP_TRIGGER() || dMw_DOWN_TRIGGER()) && !dMw_LEFT_TRIGGER() && !dMw_RIGHT_TRIGGER()) || dMeter2Info_isMenuInForce(2) || dMeter2Info_isTouchKeyCheck(2)) &&
                    dMeter2Info_isWindowAccept(2) &&
                    (dMeter2Info_getMapStatus() == 0 || dMeter2Info_getMapStatus() == 1) &&
                    dMeter2Info_isItemOpenCheck() &&
@@ -629,9 +627,13 @@ void dMw_c::key_wait_proc() {
                 dMeter2Info_getMeterClass()->emphasisButtonDelete();
             }
 
-            // Boofener: Removed dpad down, only dpad up opens item wheel now
-            field_0x14B = 2;
-            dMw_ring_create(0);
+            if (dMw_DOWN_TRIGGER()) {
+                field_0x14B = 1;
+                dMw_ring_create(2);
+            } else {
+                field_0x14B = 2;
+                dMw_ring_create(0);
+            }
 
             mMenuProc = RING_OPEN;
             field_0x14B = 0;

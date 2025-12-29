@@ -159,7 +159,7 @@ if %ERRORLEVEL% EQU 0 (
 echo.
 
 echo [1/3] Configuring build...
-python configure.py --non-matching --map
+uv run configure.py --non-matching --map
 if errorlevel 1 (
     echo ERROR: Configure failed
     echo.
@@ -176,7 +176,7 @@ if errorlevel 1 (
         rd /s /q "build\GZ2E01" 2>nul
     )
     echo Reconfiguring...
-    python configure.py --non-matching --map
+    uv run configure.py --non-matching --map
     if errorlevel 1 (
         echo ERROR: Reconfigure failed
         echo.
@@ -195,7 +195,7 @@ if errorlevel 1 (
 
 echo.
 echo [3/3] Building ISO...
-python tools\rebuild-decomp-tp.py "%VANILLA_ISO%" "%OUTPUT_ISO%" "%DECOMP_PATH%"
+uv run tools\rebuild-decomp-tp.py "%VANILLA_ISO%" "%OUTPUT_ISO%" "%DECOMP_PATH%"
 if errorlevel 1 (
     echo ERROR: ISO build failed
     echo.

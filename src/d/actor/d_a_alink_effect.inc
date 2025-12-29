@@ -2070,7 +2070,7 @@ void daAlink_lockCursor_c::update() {
         mLockCursorAngle += -29.0f;
     }
 
-    field_0x30 += 0.9f; //what it do
+    field_0x30 += 0.9f;
 
     if (field_0x30 >= field_0x1c->getFrameMax()) {
         field_0x30 -= field_0x1c->getFrameMax();

@@ -13,8 +13,7 @@
  * 
  * @details 
  * 
-*/
-
+ */
 class e_hb_class {
 public:
     /* 0x0000 */ fopEn_enemy_c enemy;
